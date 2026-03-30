@@ -1260,7 +1260,7 @@ async function sendToNotion(taskName, bizId, priority) {
       'タスク': { title: [{ text: { content: taskName } }] },
     }
   };
-  if (bizName) payload.properties['事業'] = { select: { name: bizName } };
+  if (bizName) payload.properties['事業'] = { multi_select: [{ name: bizName }] };
   if (priority) payload.properties['優先度'] = { select: { name: priority } };
 
   const WORKER_URL = 'https://cockpit-proxy.nanimono-furukawa.workers.dev/';
@@ -1271,7 +1271,11 @@ async function sendToNotion(taskName, bizId, priority) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint: 'pages', payload })
     });
-    return res.ok;
+    if (res.ok) return true;
+    const errText = await res.text();
+    console.error('Notion API error:', res.status, errText);
+    alert('Notion error: ' + errText);
+    return false;
   } catch(e) {
     console.error('Notion send error:', e);
     return false;
