@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F5F0;
+    --surface: #FFFFFF;
+    --surface-alt: #EDEDE8;
+    --border: #DDDDD8;
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B6B6B;
+    --text-muted: #9B9B9B;
+    --accent: #2D6A4F;
+    --accent-light: #E9F5EE;
+    --accent-dark: #1B4332;
+    --red: #C0392B;
+    --red-light: #FDEDEB;
+    --blue: #2563EB;
+    --blue-light: #EFF6FF;
+    --purple: #7C3AED;
+    --purple-light: #F3F0FF;
+    --tag-shinsei: #2563EB;
+    --tag-skb: #EA580C;
+    --tag-kaiun: #F59E0B;
+    --tag-tenshi: #EC4899;
+    --tag-kaiun-tenshi: #B45309;
+    --tag-water: #06B6D4;
+    --tag-ninja: #8B5CF6;
+    --tag-zeno: #3B82F6;
+    --tag-sukebe: #EF4444;
+    --tag-personal: #6B7280;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 17px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  .date-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-muted);
+    background: var(--surface-alt); padding: 3px 8px; border-radius: 5px;
+  }
+  .greeting { font-size: 12px; color: var(--text-secondary); font-weight: 300; }
+
+  /* ── Dashboard Grid ── */
+  .dashboard {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    animation: cardIn 0.3s ease-out both;
+  }
+  @keyframes cardIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .card:nth-child(1){animation-delay:.02s}.card:nth-child(2){animation-delay:.04s}
+  .card:nth-child(3){animation-delay:.06s}.card:nth-child(4){animation-delay:.08s}
+  .card:nth-child(5){animation-delay:.1s}.card:nth-child(6){animation-delay:.12s}
+  .card:nth-child(7){animation-delay:.14s}
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px 8px; border-bottom: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 10px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted);
+  }
+  .card-body { padding: 10px 14px 14px; }
+
+  /* ── Clock + Pomo ── */
+  .card-clock { grid-column: 1 / -1; }
+  .clock-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .clock-section { display: flex; align-items: baseline; gap: 8px; }
+  .current-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 44px; font-weight: 700; letter-spacing: -2px; line-height: 1;
+  }
+  .current-seconds {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; color: var(--text-muted); line-height: 1;
+  }
+  .pomo-section { display: flex; align-items: center; gap: 14px; }
+  .pomo-display { text-align: center; }
+  .pomo-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 34px; font-weight: 500; color: var(--accent); line-height: 1;
+    min-width: 100px;
+  }
+  .pomo-time.active { color: var(--red); }
+  .pomo-time.on-break { color: var(--blue); }
+  .pomo-label { font-size: 10px; color: var(--text-muted); margin-top: 3px; letter-spacing: 0.5px; }
+  .pomo-rounds { display: flex; gap: 4px; margin-top: 5px; justify-content: center; }
+  .pomo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .pomo-dot.filled { background: var(--accent); }
+  .pomo-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .pomo-duration-row { display: flex; gap: 4px; }
+  .dur-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; padding: 4px 8px; border: 1px solid var(--border);
+    border-radius: 5px; background: var(--surface-alt); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .dur-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .dur-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+  .pomo-ctrl-row { display: flex; gap: 5px; }
+  .pomo-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px; font-weight: 500; padding: 6px 14px;
+    border: 1px solid var(--border); border-radius: 6px;
+    cursor: pointer; transition: all 0.15s; background: var(--surface-alt); color: var(--text-primary);
+  }
+  .pomo-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .pomo-btn.primary:hover { background: var(--accent-dark); }
+  .pomo-btn.stop { background: var(--red-light); color: var(--red); border-color: #E8ADA6; }
+
+  /* ── Focus ── */
+  .card-focus { grid-column: 1; }
+  .monthly-theme {
+    background: var(--surface-alt); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .theme-bar { width: 3px; height: 28px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  .theme-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 1px; }
+  .theme-text { font-size: 14px; font-weight: 500; }
+  .today-label {
+    font-size: 10px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ai-suggest-btn {
+    font-size: 10px; color: var(--purple); background: var(--purple-light);
+    border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; font-weight: 500; transition: all 0.15s;
+  }
+  .ai-suggest-btn:hover { background: var(--purple); color: white; }
+  .focus-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--surface-alt); cursor: pointer;
+  }
+  .focus-item:last-child { border-bottom: none; }
+  .focus-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700; color: var(--accent);
+    width: 20px; text-align: center; flex-shrink: 0; line-height: 1.5;
+  }
+  .focus-cb {
+    width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 5px;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; cursor: pointer; margin-top: 1px;
+  }
+  .focus-cb.done { background: var(--accent); border-color: var(--accent); }
+  .focus-cb.done::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .focus-name { font-size: 13px; line-height: 1.5; }
+  .focus-name.done { text-decoration: line-through; color: var(--text-muted); }
+  .tag {
+    display: inline-block; font-size: 9px; font-weight: 500;
+    padding: 1px 6px; border-radius: 3px; letter-spacing: 0.2px; margin-top: 2px;
+  }
+  .tag-zeno{background:#EFF6FF;color:var(--tag-zeno)}.tag-ninja{background:#F3F0FF;color:var(--tag-ninja)}
+  .tag-water{background:#ECFEFF;color:var(--tag-water)}.tag-kaiun{background:#FFFBEB;color:var(--tag-kaiun)}
+  .tag-tenshi{background:#FDF2F8;color:var(--tag-tenshi)}.tag-sukebe{background:#FEF2F2;color:var(--tag-sukebe)}
+  .tag-personal{background:#F3F4F6;color:var(--tag-personal)}
+  .ai-suggestion {
+    display: none; background: var(--purple-light); border: 1px solid #DDD6FE;
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .ai-suggestion.show { display: block; }
+  .ai-suggestion .ai-tag {
+    font-size: 9px; font-weight: 600; color: var(--purple);
+    background: white; padding: 1px 5px; border-radius: 3px; margin-right: 4px;
+  }
+  .ai-loading { color: var(--purple); font-style: italic; }
+
+  /* ── Daily Ops ── */
+  .card-ops { grid-column: 2; grid-row: 2 / 5; }
+  .ops-header-right { display: flex; align-items: center; gap: 6px; }
+  .ops-progress-mini {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--accent); font-weight: 500;
+  }
+  .btn-icon {
+    width: 28px; height: 28px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--surface-alt); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: all 0.15s; color: var(--text-secondary);
+  }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .btn-icon.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Filter pills */
+  .ops-filters {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .filter-pill {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 9px; font-weight: 500; padding: 3px 8px;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; transition: all 0.15s;
+    color: var(--text-secondary);
+  }
+  .filter-pill:hover { border-color: var(--accent); }
+  .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .filter-pill[data-biz="shinsei"].active { background: var(--tag-shinsei); border-color: var(--tag-shinsei); color: white; }
+  .filter-pill[data-biz="skb"].active { background: var(--tag-skb); border-color: var(--tag-skb); color: white; }
+  .filter-pill[data-biz="kaiun"].active { background: var(--tag-kaiun); border-color: var(--tag-kaiun); color: white; }
+  .filter-pill[data-biz="tenshi"].active { background: var(--tag-tenshi); border-color: var(--tag-tenshi); color: white; }
+  .filter-pill[data-biz="kaiun-tenshi"].active { background: var(--tag-kaiun-tenshi); border-color: var(--tag-kaiun-tenshi); color: white; }
+
+  /* Reset bar */
+  .reset-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px; padding: 5px 10px;
+    background: var(--surface-alt); border-radius: var(--radius-sm);
+  }
+  .reset-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-secondary);
+  }
+  .reset-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px; font-weight: 500; padding: 3px 8px;
+    border: 1px solid var(--border); border-radius: 5px;
+    background: var(--surface); cursor: pointer; color: var(--text-primary);
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Yesterday */
+  .yesterday-banner {
+    margin-bottom: 8px; padding: 5px 10px;
+    background: var(--blue-light); border: 1px solid #BFDBFE;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.15s;
+  }
+  .yesterday-banner:hover { background: #DBEAFE; }
+  .yesterday-label { font-size: 10px; color: var(--blue); font-weight: 500; }
+  .yesterday-stats {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--blue);
+  }
+  .yesterday-detail {
+    display: none; margin-bottom: 8px;
+    background: var(--blue-light); border: 1px solid #BFDBFE;
+    border-radius: var(--radius-sm); padding: 6px 10px;
+    max-height: 150px; overflow-y: auto;
+  }
+  .yesterday-detail.show { display: block; }
+  .yt-row { display: flex; align-items: center; gap: 5px; padding: 2px 0; font-size: 10px; color: var(--text-secondary); }
+  .yt-check { color: var(--accent); font-weight: 700; }
+  .yt-miss { color: var(--red); font-weight: 700; }
+  .yt-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted); margin-left: auto; }
+
+  /* Time Block */
+  .time-block { margin-bottom: 6px; }
+  .time-block:last-child { margin-bottom: 0; }
+  .block-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 0; margin-bottom: 2px; cursor: pointer; user-select: none;
+  }
+  .block-time-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+  }
+  .block-time-chip.default { background: var(--surface-alt); color: var(--text-muted); }
+  .block-time-chip.current { background: var(--accent); color: white; }
+  .block-time-chip.done { background: var(--accent-light); color: var(--accent); }
+  .block-label { font-size: 11px; font-weight: 500; }
+  .block-progress {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-muted); margin-left: auto;
+  }
+  .block-progress.all-done { color: var(--accent); font-weight: 600; }
+  .block-collapse { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; }
+  .block-collapse.collapsed { transform: rotate(-90deg); }
+  .block-tasks { overflow: hidden; transition: max-height 0.25s ease; }
+
+  /* Task Row */
+  .task-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 4px; border-bottom: 1px solid var(--surface-alt); transition: background 0.1s;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { background: #FAFAF7; }
+  .task-row.checked { opacity: 0.55; }
+  .task-row.checked .task-name { text-decoration: line-through; color: var(--text-muted); }
+  .task-row.filtered-out { display: none; }
+  .task-cb {
+    width: 18px; height: 18px; border: 2px solid var(--border);
+    border-radius: 5px; flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .task-cb:hover { border-color: var(--accent); }
+  .task-cb.done { background: var(--accent); border-color: var(--accent); }
+  .task-cb.done::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .task-content { flex: 1; min-width: 0; }
+  .task-name { font-size: 11px; line-height: 1.4; }
+  .task-meta { display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+  .biz-tag {
+    font-size: 8px; font-weight: 500; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.2px;
+  }
+  .biz-tag-shinsei { background: #EFF6FF; color: var(--tag-shinsei); }
+  .biz-tag-skb { background: #FFF7ED; color: var(--tag-skb); }
+  .biz-tag-kaiun { background: #FFFBEB; color: var(--tag-kaiun); }
+  .biz-tag-tenshi { background: #FDF2F8; color: var(--tag-tenshi); }
+  .biz-tag-kaiun-tenshi { background: #FEF3C7; color: var(--tag-kaiun-tenshi); }
+  .biz-tag-water { background: #ECFEFF; color: var(--tag-water); }
+  .biz-tag-ninja { background: #F3F0FF; color: var(--tag-ninja); }
+  .task-timestamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--accent); font-weight: 500; flex-shrink: 0;
+  }
+
+  /* Edit mode */
+  .edit-controls { display: none; align-items: center; gap: 2px; flex-shrink: 0; }
+  .edit-mode .edit-controls { display: flex; }
+  .edit-mode .task-cb { display: none; }
+  .edit-mode .task-timestamp { display: none; }
+  .edit-btn-sm {
+    width: 20px; height: 20px; border: 1px solid var(--border);
+    border-radius: 4px; background: var(--surface); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--text-muted); transition: all 0.12s;
+  }
+  .edit-btn-sm:hover { background: var(--surface-alt); }
+  .edit-btn-sm.del:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+  .edit-btn-sm.up:hover, .edit-btn-sm.down:hover { color: var(--accent); border-color: var(--accent); }
+  .add-task-row {
+    display: none; gap: 4px; padding: 4px; align-items: center;
+  }
+  .edit-mode .add-task-row { display: flex; }
+  .add-task-input {
+    flex: 1; padding: 4px 6px; border: 1px solid var(--border);
+    border-radius: 5px; font-family: 'Noto Sans JP', sans-serif; font-size: 10px; outline: none;
+  }
+  .add-task-input:focus { border-color: var(--accent); }
+  .add-task-select {
+    padding: 4px 4px; border: 1px solid var(--border);
+    border-radius: 5px; font-family: 'Noto Sans JP', sans-serif; font-size: 9px; outline: none; background: var(--surface);
+  }
+  .add-task-btn {
+    padding: 4px 8px; background: var(--accent); color: white;
+    border: none; border-radius: 5px; font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  }
+  .add-task-btn:hover { background: var(--accent-dark); }
+
+  .ops-scroll {
+    max-height: 560px;
+    overflow-y: auto;
+  }
+  .ops-scroll::-webkit-scrollbar { width: 4px; }
+  .ops-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── Keep ── */
+  .card-keep { grid-column: 1; }
+  .keep-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .act-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px; font-weight: 500; color: var(--text-primary);
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+  }
+  .act-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .act-btn.notion:hover { background: var(--purple-light); border-color: var(--purple); color: var(--purple); }
+  .keep-ai-trigger {
+    width: 100%; margin-top: 8px; padding: 6px;
+    background: var(--purple-light); border: 1px dashed #DDD6FE;
+    border-radius: 6px; color: var(--purple); font-size: 11px;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .keep-ai-trigger:hover { background: var(--purple); color: white; border-style: solid; }
+  .keep-ai-area {
+    margin-top: 10px; background: var(--purple-light); border: 1px solid #DDD6FE;
+    border-radius: var(--radius-sm); padding: 8px 10px; display: none;
+  }
+  .keep-ai-area.show { display: block; }
+  .keep-ai-header {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--purple); font-weight: 600; margin-bottom: 6px;
+  }
+  .keep-ai-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 0; border-bottom: 1px solid #E9E5FF; font-size: 12px;
+  }
+  .keep-ai-item:last-child { border-bottom: none; }
+  .keep-ai-item button {
+    font-size: 10px; background: white; border: 1px solid #DDD6FE;
+    border-radius: 4px; padding: 2px 8px; cursor: pointer; color: var(--purple);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .keep-ai-item button:hover { background: var(--purple); color: white; }
+
+  /* ── Claude Chat ── */
+  .card-chat { grid-column: 3; grid-row: 2 / 6; }
+  .chat-messages {
+    height: 420px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px;
+  }
+  .chat-msg {
+    max-width: 88%; padding: 8px 11px;
+    border-radius: 10px; font-size: 12px; line-height: 1.6; word-break: break-word;
+  }
+  .chat-msg.user {
+    align-self: flex-end; background: var(--accent); color: white;
+    border-bottom-right-radius: 3px;
+  }
+  .chat-msg.ai {
+    align-self: flex-start; background: var(--surface-alt); color: var(--text-primary);
+    border-bottom-left-radius: 3px;
+  }
+  .chat-input-row { display: flex; gap: 6px; margin-top: 8px; }
+  .chat-input {
+    flex: 1; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; outline: none; transition: border 0.15s;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-send {
+    padding: 8px 14px; background: var(--accent); color: white;
+    border: none; border-radius: var(--radius-sm); cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 500;
+    transition: background 0.15s;
+  }
+  .chat-send:hover { background: var(--accent-dark); }
+
+  /* ── Task Breakdown ── */
+  .card-breakdown { grid-column: 1; }
+  .breakdown-input-area {
+    display: flex; gap: 6px; margin-bottom: 8px;
+  }
+  .breakdown-input {
+    flex: 1; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; outline: none; transition: border 0.15s;
+  }
+  .breakdown-input:focus { border-color: var(--purple); }
+  .breakdown-btn {
+    padding: 8px 14px; background: var(--purple); color: white;
+    border: none; border-radius: var(--radius-sm); cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 500;
+    white-space: nowrap; transition: background 0.15s;
+  }
+  .breakdown-btn:hover { background: #6D28D9; }
+  .breakdown-biz-select {
+    padding: 8px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 10px; background: var(--surface);
+    outline: none;
+  }
+  .breakdown-results {
+    display: none; margin-top: 8px;
+  }
+  .breakdown-results.show { display: block; }
+  .breakdown-parent {
+    font-size: 11px; font-weight: 600; color: var(--purple);
+    padding: 4px 0; margin-bottom: 4px;
+    border-bottom: 1px solid var(--purple-light);
+  }
+  .breakdown-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid var(--surface-alt);
+    font-size: 11px;
+  }
+  .breakdown-item:last-child { border-bottom: none; }
+  .breakdown-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--purple); font-weight: 600; flex-shrink: 0; min-width: 18px;
+  }
+  .breakdown-text { flex: 1; line-height: 1.4; }
+  .breakdown-time {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--text-muted); flex-shrink: 0;
+  }
+  .breakdown-action-btn {
+    font-size: 9px; padding: 3px 8px; border-radius: 4px;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500; transition: all 0.12s; flex-shrink: 0;
+    border: 1px solid;
+  }
+  .btn-to-notion {
+    background: var(--purple-light); color: var(--purple); border-color: #DDD6FE;
+  }
+  .btn-to-notion:hover { background: var(--purple); color: white; }
+  .btn-to-ops {
+    background: var(--accent-light); color: var(--accent); border-color: #B7E4C7;
+  }
+  .btn-to-ops:hover { background: var(--accent); color: white; }
+  .breakdown-actions-row {
+    display: flex; gap: 6px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid var(--surface-alt);
+  }
+  .breakdown-bulk-btn {
+    flex: 1; padding: 6px; border-radius: var(--radius-sm);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 10px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .bulk-notion {
+    background: var(--purple-light); color: var(--purple); border: 1px solid #DDD6FE;
+  }
+  .bulk-notion:hover { background: var(--purple); color: white; }
+  .bulk-ops {
+    background: var(--accent-light); color: var(--accent); border: 1px solid #B7E4C7;
+  }
+  .bulk-ops:hover { background: var(--accent); color: white; }
+
+  /* ── Numbers ── */
+  .card-numbers { grid-column: 1 / 3; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi-item {
+    background: var(--surface-alt); border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .kpi-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .kpi-label { font-size: 9px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.3px; }
+  .kpi-biz-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .kpi-numbers { display: flex; align-items: baseline; gap: 6px; }
+  .kpi-current {
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600;
+  }
+  .kpi-unit { font-size: 10px; color: var(--text-secondary); }
+  .kpi-target {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);
+  }
+  .kpi-bar-track {
+    height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden;
+  }
+  .kpi-bar-fill {
+    height: 100%; border-radius: 2px; transition: width 0.5s ease;
+  }
+  .kpi-bar-fill.green { background: var(--accent); }
+  .kpi-bar-fill.yellow { background: #F59E0B; }
+  .kpi-bar-fill.red { background: var(--red); }
+  .kpi-pct {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted);
+    margin-top: 2px; text-align: right;
+  }
+
+  /* ── Links / Tools ── */
+  .card-links { grid-column: 1 / -1; }
+  .tools-grid { display: flex; flex-direction: column; gap: 0; }
+  .tool-item {
+    border-bottom: 1px solid var(--surface-alt);
+  }
+  .tool-item:last-child { border-bottom: none; }
+  .tool-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 4px; cursor: pointer; transition: background 0.1s;
+  }
+  .tool-header:hover { background: #FAFAF7; }
+  .tool-icon { font-size: 14px; flex-shrink: 0; }
+  .tool-name { font-size: 12px; font-weight: 500; flex: 1; }
+  .tool-link {
+    font-size: 10px; color: var(--accent); text-decoration: none;
+    padding: 2px 8px; border: 1px solid var(--accent); border-radius: 4px;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .tool-link:hover { background: var(--accent); color: white; }
+  .tool-expand { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+  .tool-expand.open { transform: rotate(180deg); }
+  .tool-steps {
+    max-height: 0; overflow: hidden; transition: max-height 0.25s ease;
+    padding: 0 4px;
+  }
+  .tool-steps.open { max-height: 400px; padding: 0 4px 8px; }
+  .tool-step {
+    display: flex; align-items: flex-start; gap: 6px;
+    padding: 3px 0 3px 22px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+    color: var(--accent); flex-shrink: 0; min-width: 16px;
+  }
+  .tool-links-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding-left: 22px;
+  }
+  .tool-sub-link {
+    font-size: 10px; color: var(--blue); text-decoration: none;
+    background: var(--blue-light); padding: 2px 7px; border-radius: 4px;
+    transition: all 0.12s;
+  }
+  .tool-sub-link:hover { background: var(--blue); color: white; }
+
+  /* ── Mobile ── */
+  @media (max-width: 1024px) {
+    .dashboard { grid-template-columns: 1fr 1fr; }
+    .card-clock { grid-column: 1 / -1; }
+    .card-ops { grid-column: 1; grid-row: auto; }
+    .card-chat { grid-column: 2; grid-row: auto; }
+    .card-numbers { grid-column: 1 / -1; }
+    .card-links { grid-column: 1 / -1; }
+  }
+  @media (max-width: 768px) {
+    .dashboard { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+    .card-clock, .card-focus, .card-ops, .card-keep, .card-breakdown, .card-chat, .card-numbers, .card-links {
+      grid-column: 1; grid-row: auto;
+    }
+    .clock-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .current-time { font-size: 32px; }
+    .pomo-time { font-size: 26px; min-width: 80px; }
+    .pomo-section { width: 100%; }
+    .pomo-right { align-items: flex-start; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .greeting { display: none; }
+    .chat-messages { height: 200px; }
+    .ops-scroll { max-height: 400px; }
+  }
+  @media (max-width: 400px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="logo">Cockpit</span>
+    <span class="date-chip" id="dateDisplay"></span>
+  </div>
+  <span class="greeting" id="greeting"></span>
+</header>
+
+<main class="dashboard">
+
+  <!-- ① Clock + Pomodoro -->
+  <div class="card card-clock">
+    <div class="card-body">
+      <div class="clock-row">
+        <div class="clock-section">
+          <span class="current-time" id="clock">00:00</span>
+          <span class="current-seconds" id="clockSec">00</span>
+        </div>
+        <div class="pomo-section">
+          <div class="pomo-display">
+            <div class="pomo-time" id="pomoTime">25:00</div>
+            <div class="pomo-label" id="pomoLabel">FOCUS</div>
+            <div class="pomo-rounds" id="pomoRounds">
+              <div class="pomo-dot"></div><div class="pomo-dot"></div>
+              <div class="pomo-dot"></div><div class="pomo-dot"></div>
+            </div>
+          </div>
+          <div class="pomo-right">
+            <div class="pomo-duration-row">
+              <button class="dur-btn" onclick="setDuration(5)">5m</button>
+              <button class="dur-btn" onclick="setDuration(10)">10m</button>
+              <button class="dur-btn" onclick="setDuration(15)">15m</button>
+              <button class="dur-btn selected" onclick="setDuration(25)">25m</button>
+            </div>
+            <div class="pomo-ctrl-row">
+              <button class="pomo-btn primary" id="pomoStart" onclick="togglePomo()">開始</button>
+              <button class="pomo-btn" onclick="resetPomo()">リセット</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② Focus + Quick Task Add -->
+  <div class="card card-focus">
+    <div class="card-header">
+      <span class="card-title">今日のフォーカス</span>
+      <button class="btn-icon" id="focusEditToggle" onclick="toggleFocusEdit()" title="編集">✏️</button>
+    </div>
+    <div class="card-body">
+      <div class="monthly-theme">
+        <div class="theme-bar"></div>
+        <div>
+          <div class="theme-label">今月のテーマ</div>
+          <div class="theme-text">仕組み化と黒字化</div>
+        </div>
+      </div>
+      <div class="today-label">
+        <span>今日の3つ</span>
+        <button class="ai-suggest-btn" onclick="suggestToday()">🤖 AIに提案させる</button>
+      </div>
+      <div id="focusList"></div>
+      <div id="focusAddRow" style="display:none;margin-top:6px;">
+        <div style="display:flex;gap:4px;">
+          <input id="focusAddInput" class="add-task-input" type="text" placeholder="フォーカスを追加..."
+            onkeydown="if(event.key==='Enter')addFocusItem()" style="flex:1;">
+          <select id="focusAddBiz" class="add-task-select">
+            <option value="">タグなし</option>
+            <option value="shinsei">神聖の光</option>
+            <option value="skb">SKB</option>
+            <option value="kaiun">開運</option>
+            <option value="tenshi">天賜</option>
+            <option value="ninja">ニンジャ</option>
+            <option value="water">水道</option>
+          </select>
+          <button class="add-task-btn" onclick="addFocusItem()">追加</button>
+        </div>
+      </div>
+      <div class="ai-suggestion" id="aiSuggestion"></div>
+    </div>
+  </div>
+
+  <!-- ③ Daily Operations (collapsible) -->
+  <div class="card card-ops">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleCardCollapse('ops')">
+      <span class="card-title">デイリーオペレーション</span>
+      <div class="ops-header-right">
+        <span class="ops-progress-mini" id="totalProgress">0/19</span>
+        <button class="btn-icon" id="editToggle" onclick="event.stopPropagation();toggleEdit()" title="編集モード">✏️</button>
+        <span class="block-collapse collapsed" id="opsCollapseArrow">▼</span>
+      </div>
+    </div>
+    <div class="card-body" id="opsBody" style="display:none;">
+      <!-- Filters -->
+      <div class="ops-filters" id="opsFilters">
+        <button class="filter-pill active" data-biz="all" onclick="setFilter('all')">すべて</button>
+        <button class="filter-pill" data-biz="shinsei" onclick="setFilter('shinsei')">神聖の光</button>
+        <button class="filter-pill" data-biz="skb" onclick="setFilter('skb')">SKB</button>
+        <button class="filter-pill" data-biz="kaiun-tenshi" onclick="setFilter('kaiun-tenshi')">開運・天賜</button>
+        <button class="filter-pill" data-biz="kaiun" onclick="setFilter('kaiun')">開運</button>
+        <button class="filter-pill" data-biz="tenshi" onclick="setFilter('tenshi')">天賜</button>
+      </div>
+
+      <div class="reset-bar">
+        <span class="reset-date" id="opsDate"></span>
+        <button class="reset-btn" onclick="confirmReset()">🔄 リセット</button>
+      </div>
+
+      <!-- Yesterday -->
+      <div class="yesterday-banner" id="yesterdayBanner" onclick="toggleYesterday()" style="display:none;">
+        <span class="yesterday-label">📋 前日</span>
+        <span class="yesterday-stats" id="yesterdayStats"></span>
+      </div>
+      <div class="yesterday-detail" id="yesterdayDetail"></div>
+
+      <div class="ops-scroll" id="blocksContainer"></div>
+    </div>
+  </div>
+
+  <!-- ④ Claude Chat (collapsible) -->
+  <div class="card card-chat">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleCardCollapse('chat')">
+      <span class="card-title">Claude</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="date-chip">AI アシスタント</span>
+        <span class="block-collapse collapsed" id="chatCollapseArrow">▼</span>
+      </div>
+    </div>
+    <div class="card-body" id="chatBody" style="display:none;">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg ai">おはよう。今日は何から始める？</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" type="text" placeholder="何でも聞いて..."
+          onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">送信</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ クイックキャプチャ -->
+  <div class="card card-keep">
+    <div class="card-header">
+      <span class="card-title">クイックキャプチャ</span>
+      <a href="https://keep.google.com" target="_blank" style="font-size:10px;color:var(--text-muted);text-decoration:none;">Keep ↗</a>
+    </div>
+    <div class="card-body">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">思いついたことをここに。メモに残すかNotionに送るか選べる。</div>
+      <input id="captureInput" class="breakdown-input" type="text" placeholder="メモやタスクを入力..."
+        onkeydown="if(event.key==='Enter')captureMemo()" style="width:100%;margin-bottom:6px;">
+      <div style="display:flex;gap:4px;">
+        <select id="captureBiz" class="add-task-select" style="flex:0 0 auto;">
+          <option value="">タグなし</option>
+          <option value="shinsei">神聖の光</option>
+          <option value="skb">SKB</option>
+          <option value="kaiun">開運</option>
+          <option value="tenshi">天賜</option>
+          <option value="ninja">ニンジャ</option>
+          <option value="water">水道</option>
+          <option value="個人">個人</option>
+        </select>
+        <button class="add-task-btn" onclick="captureMemo()" style="flex:1;">📝 メモ保存</button>
+        <button class="add-task-btn" onclick="captureToNotion()" style="flex:1;background:var(--purple);">→Notion</button>
+      </div>
+      <div id="captureStatus" style="font-size:10px;margin-top:3px;color:var(--text-muted);"></div>
+      <!-- Saved memos -->
+      <div id="memoList" style="margin-top:8px;"></div>
+      <button class="keep-ai-trigger" onclick="analyzeKeep()" style="margin-top:6px;">🤖 メモからタスク候補を抽出</button>
+      <div class="keep-ai-area" id="keepAiArea">
+        <div class="keep-ai-header">💡 タスク候補</div>
+        <div id="keepAiResults"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤b Task Breakdown -->
+  <div class="card card-breakdown">
+    <div class="card-header">
+      <span class="card-title">タスク細分化</span>
+      <span class="date-chip">AI分解</span>
+    </div>
+    <div class="card-body">
+      <div class="breakdown-input-area">
+        <input class="breakdown-input" id="breakdownInput" type="text"
+          placeholder="大きいタスクを入力... 例：広告選定ツール制作"
+          onkeydown="if(event.key==='Enter')breakdownTask()">
+        <select class="breakdown-biz-select" id="breakdownBiz">
+          <option value="shinsei">神聖の光</option>
+          <option value="skb" selected>SKB</option>
+          <option value="kaiun">開運</option>
+          <option value="tenshi">天賜</option>
+          <option value="kaiun-tenshi">開運・天賜</option>
+          <option value="water">水道</option>
+          <option value="ninja">ニンジャ</option>
+        </select>
+        <button class="breakdown-btn" onclick="breakdownTask()">🔨 分解</button>
+      </div>
+      <div class="breakdown-results" id="breakdownResults">
+        <div class="breakdown-parent" id="breakdownParent"></div>
+        <div id="breakdownList"></div>
+        <div class="breakdown-actions-row">
+          <button class="breakdown-bulk-btn bulk-ops" onclick="bulkAddToOps()">📋 全部→今日のオペに追加</button>
+          <button class="breakdown-bulk-btn bulk-notion" onclick="bulkAddToNotion()">📝 全部→Notionへ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ Numbers: 目標 vs 現状 (動的) -->
+  <div class="card card-numbers">
+    <div class="card-header">
+      <span class="card-title">今月の数字</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="date-chip" id="kpiMonth">3月</span>
+        <button class="btn-icon" id="kpiEditBtn" onclick="toggleKpiEdit()" title="編集">✏️</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </div>
+  </div>
+
+  <!-- ⑦ ツール＋手順 (動的) -->
+  <div class="card card-links">
+    <div class="card-header">
+      <span class="card-title">ツール＆手順</span>
+      <button class="btn-icon" id="toolsEditBtn" onclick="toggleToolsEdit()" title="編集">✏️</button>
+    </div>
+    <div class="card-body">
+      <div class="tools-grid" id="toolsGrid"></div>
+      <!-- Quick links -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 4px 0;">
+        <a class="tool-sub-link" href="https://keep.google.com" target="_blank">📝 Keep</a>
+        <a class="tool-sub-link" href="https://notion.so" target="_blank">📋 Notion</a>
+        <a class="tool-sub-link" href="https://claude.ai" target="_blank">🤖 Claude</a>
+        <a class="tool-sub-link" href="https://x.com" target="_blank">📱 X</a>
+        <a class="tool-sub-link" href="https://docs.google.com/spreadsheets" target="_blank">📊 スプシ</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ========================================
+// CLOCK
+// ========================================
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('clockSec').textContent = String(n.getSeconds()).padStart(2,'0');
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ========================================
+// DATE & GREETING
+// ========================================
+const now = new Date();
+const days = ['日','月','火','水','木','金','土'];
+const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+document.getElementById('dateDisplay').textContent = dateStr;
+const hr = now.getHours();
+document.getElementById('greeting').textContent =
+  hr < 10 ? 'おはよう。今日も1つずつ。' : hr < 17 ? '集中モード。' : 'お疲れさま。振り返りの時間。';
+
+// ========================================
+// POMODORO
+// ========================================
+let pState='idle',pMode='focus',pSec=25*60,pInt=null,pRound=0,pDur=25;
+
+function updatePomo(){
+  const m=String(Math.floor(pSec/60)).padStart(2,'0');
+  const s=String(pSec%60).padStart(2,'0');
+  const el=document.getElementById('pomoTime');
+  el.textContent=`${m}:${s}`;
+  el.className='pomo-time'+(pState==='running'&&pMode==='focus'?' active':'')+(pMode==='break'?' on-break':'');
+  document.getElementById('pomoLabel').textContent=pMode==='focus'?'FOCUS':'BREAK';
+  document.querySelectorAll('.pomo-dot').forEach((d,i)=>d.classList.toggle('filled',i<pRound));
+}
+
+function setDuration(min){
+  if(pState==='running')return;
+  pDur=min; pSec=min*60; pMode='focus';
+  document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('selected'));
+  event.target.classList.add('selected'); updatePomo();
+}
+
+function togglePomo(){
+  const btn=document.getElementById('pomoStart');
+  if(pState==='idle'||pState==='paused'){
+    pState='running'; btn.textContent='停止'; btn.className='pomo-btn stop';
+    pInt=setInterval(()=>{
+      pSec--;
+      if(pSec<=0){
+        clearInterval(pInt);
+        if(pMode==='focus'){pRound++;pMode='break';pSec=5*60;pState='idle';btn.textContent='休憩開始';btn.className='pomo-btn primary';}
+        else{pMode='focus';pSec=pDur*60;pState='idle';btn.textContent='開始';btn.className='pomo-btn primary';}
+      }
+      updatePomo();
+    },1000);
+  } else { clearInterval(pInt);pState='paused';btn.textContent='再開';btn.className='pomo-btn primary'; }
+  updatePomo();
+}
+
+function resetPomo(){
+  clearInterval(pInt);pState='idle';pMode='focus';pSec=pDur*60;
+  const btn=document.getElementById('pomoStart');
+  btn.textContent='開始';btn.className='pomo-btn primary'; updatePomo();
+}
+updatePomo();
+
+// ========================================
+// FOCUS
+// ========================================
+const FOCUS_KEY = 'cockpit-focus';
+const DEFAULT_FOCUS = [
+  { name: '広告選定ツール制作（SKBベース）', biz: 'skb', done: false },
+  { name: '自動ステップセット完成（開運・天賜）', biz: 'kaiun', done: false },
+  { name: '収支計算自動化の仕上げ', biz: 'kaiun', done: false },
+];
+let focusItems = JSON.parse(JSON.stringify(DEFAULT_FOCUS));
+let focusEditMode = false;
+
+async function loadFocus() {
+  try {
+    const r = await window.storage.get(FOCUS_KEY);
+    if (r && r.value) focusItems = JSON.parse(r.value);
+  } catch(e) {}
+}
+
+async function saveFocus() {
+  try { await window.storage.set(FOCUS_KEY, JSON.stringify(focusItems)); } catch(e) {}
+}
+
+const BIZ_TAG_MAP = {
+  'shinsei': { cls:'tag-zeno', name:'神聖の光' },
+  'skb': { cls:'tag-sukebe', name:'SKB' },
+  'kaiun': { cls:'tag-kaiun', name:'開運' },
+  'tenshi': { cls:'tag-tenshi', name:'天賜' },
+  'ninja': { cls:'tag-ninja', name:'ニンジャ' },
+  'water': { cls:'tag-water', name:'水道' },
+};
+
+function renderFocus() {
+  const list = document.getElementById('focusList');
+  list.innerHTML = '';
+  focusItems.forEach((item, i) => {
+    const bizTag = BIZ_TAG_MAP[item.biz];
+    const div = document.createElement('div');
+    div.className = 'focus-item';
+    div.innerHTML = `
+      <span class="focus-num">${i+1}</span>
+      <div class="focus-cb ${item.done?'done':''}" onclick="event.stopPropagation();toggleFocusItem(${i})"></div>
+      <div style="flex:1;">
+        <div class="focus-name ${item.done?'done':''}">${esc(item.name)}</div>
+        ${bizTag ? `<div><span class="tag ${bizTag.cls}">${bizTag.name}</span></div>` : ''}
+      </div>
+      ${focusEditMode ? `<button class="edit-btn-sm del" onclick="event.stopPropagation();removeFocusItem(${i})" style="flex-shrink:0;">✕</button>` : ''}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById('focusAddRow').style.display = focusEditMode ? 'block' : 'none';
+  document.getElementById('focusEditToggle').classList.toggle('active', focusEditMode);
+}
+
+function toggleFocusItem(i) {
+  focusItems[i].done = !focusItems[i].done;
+  saveFocus(); renderFocus();
+}
+
+function toggleFocusEdit() {
+  focusEditMode = !focusEditMode;
+  renderFocus();
+}
+
+function addFocusItem() {
+  const inp = document.getElementById('focusAddInput');
+  const biz = document.getElementById('focusAddBiz').value;
+  const name = inp.value.trim();
+  if (!name) return;
+  focusItems.push({ name, biz, done: false });
+  inp.value = '';
+  saveFocus(); renderFocus();
+}
+
+function removeFocusItem(i) {
+  focusItems.splice(i, 1);
+  saveFocus(); renderFocus();
+}
+
+// ========================================
+// QUICK CAPTURE (memo + notion)
+// ========================================
+const MEMO_KEY = 'cockpit-memos';
+let memos = [];
+
+async function loadMemos() {
+  try {
+    const r = await window.storage.get(MEMO_KEY);
+    if (r && r.value) memos = JSON.parse(r.value);
+  } catch(e) {}
+}
+async function saveMemos() {
+  try { await window.storage.set(MEMO_KEY, JSON.stringify(memos)); } catch(e) {}
+}
+
+function renderMemos() {
+  const el = document.getElementById('memoList');
+  if (memos.length === 0) { el.innerHTML = ''; return; }
+  let h = '<div style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">保存済メモ</div>';
+  memos.forEach((m, i) => {
+    h += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--surface-alt);font-size:11px;">
+      <span style="flex:1;">${esc(m.text)}</span>
+      <button class="breakdown-action-btn btn-to-notion" onclick="memoToNotion(${i})">→Notion</button>
+      <button class="breakdown-action-btn btn-to-ops" onclick="memoToOps(${i})">→オペ</button>
+      <button class="edit-btn-sm del" onclick="deleteMemo(${i})">✕</button>
+    </div>`;
+  });
+  el.innerHTML = h;
+}
+
+function captureMemo() {
+  const inp = document.getElementById('captureInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  const biz = document.getElementById('captureBiz').value;
+  memos.push({ text, biz, time: getNow() });
+  inp.value = '';
+  saveMemos(); renderMemos();
+  showCaptureStatus('📝 メモに保存しました', 'var(--accent)');
+}
+
+async function captureToNotion() {
+  const inp = document.getElementById('captureInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  const biz = document.getElementById('captureBiz').value;
+  showCaptureStatus('送信中...', 'var(--purple)');
+  const ok = await sendToNotion(text, biz, '中');
+  if (ok) {
+    inp.value = '';
+    showCaptureStatus('✓ Notionに送信しました', 'var(--accent)');
+  } else {
+    showCaptureStatus('✗ 送信失敗', 'var(--red)');
+  }
+}
+
+async function memoToNotion(i) {
+  const m = memos[i];
+  const ok = await sendToNotion(m.text, m.biz, '中');
+  if (ok) { memos.splice(i, 1); saveMemos(); renderMemos(); }
+}
+
+function memoToOps(i) {
+  const m = memos[i];
+  const curHour = getCurrentHour();
+  let block = 'morning';
+  if (curHour >= 21) block = 'night';
+  else if (curHour >= 15) block = 'evening';
+  else if (curHour >= 12) block = 'noon';
+  opsState.tasks.push({ id: 't'+Date.now(), name: m.text, biz: m.biz || 'shinsei', block });
+  opsSave(); renderOps();
+  memos.splice(i, 1); saveMemos(); renderMemos();
+}
+
+function deleteMemo(i) {
+  memos.splice(i, 1); saveMemos(); renderMemos();
+}
+
+function showCaptureStatus(msg, color) {
+  const el = document.getElementById('captureStatus');
+  el.textContent = msg; el.style.color = color;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+// ========================================
+// KPI NUMBERS (editable)
+// ========================================
+const KPI_KEY = 'cockpit-kpi';
+const DEFAULT_KPI = [
+  { label: '開運・天賜 売上', current: 482, target: 1500, unit: '万', color: 'var(--tag-kaiun)' },
+  { label: '開運・天賜 課金者/日', current: 22, target: 30, unit: '人', color: 'var(--tag-kaiun)' },
+  { label: '開運・天賜 新規課金/月', current: 48, target: 90, unit: '件', color: 'var(--tag-kaiun)' },
+  { label: 'SKB 課金者/日', current: 6, target: 10, unit: '件', color: 'var(--tag-skb)' },
+  { label: 'SKB 新規課金/日', current: 1, target: 3, unit: '件', color: 'var(--tag-skb)' },
+  { label: 'ニンジャ 契約/月', current: 8, target: 20, unit: '台', color: 'var(--tag-ninja)' },
+];
+let kpiData = JSON.parse(JSON.stringify(DEFAULT_KPI));
+let kpiEditMode = false;
+
+async function loadKpi() {
+  try {
+    const r = await window.storage.get(KPI_KEY);
+    if (r && r.value) kpiData = JSON.parse(r.value);
+  } catch(e) {}
+}
+async function saveKpi() {
+  try { await window.storage.set(KPI_KEY, JSON.stringify(kpiData)); } catch(e) {}
+}
+
+function renderKpi() {
+  const grid = document.getElementById('kpiGrid');
+  const m = new Date().getMonth() + 1;
+  document.getElementById('kpiMonth').textContent = m + '月';
+  grid.innerHTML = '';
+
+  kpiData.forEach((k, i) => {
+    const pct = k.target > 0 ? Math.round((k.current / k.target) * 100) : 0;
+    const barColor = pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red';
+    const div = document.createElement('div');
+    div.className = 'kpi-item';
+
+    if (kpiEditMode) {
+      div.innerHTML = `
+        <div style="margin-bottom:4px;">
+          <input value="${esc(k.label)}" onchange="kpiData[${i}].label=this.value;saveKpi()"
+            style="width:100%;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;font-family:'Noto Sans JP',sans-serif;">
+        </div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:9px;color:var(--text-muted);">現在</span>
+          <input type="number" value="${k.current}" onchange="kpiData[${i}].current=Number(this.value);saveKpi();renderKpi()"
+            style="width:50px;font-size:12px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:right;">
+          <span style="font-size:9px;color:var(--text-muted);">目標</span>
+          <input type="number" value="${k.target}" onchange="kpiData[${i}].target=Number(this.value);saveKpi();renderKpi()"
+            style="width:50px;font-size:12px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:right;">
+          <span style="font-size:9px;color:var(--text-muted);">単位</span>
+          <input value="${esc(k.unit)}" onchange="kpiData[${i}].unit=this.value;saveKpi()"
+            style="width:30px;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;font-family:'Noto Sans JP',sans-serif;">
+          <button class="edit-btn-sm del" onclick="kpiData.splice(${i},1);saveKpi();renderKpi()" style="margin-left:auto;">✕</button>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="kpi-header-row">
+          <span class="kpi-label">${esc(k.label)}</span>
+          <span class="kpi-biz-dot" style="background:${k.color}"></span>
+        </div>
+        <div class="kpi-numbers">
+          <span class="kpi-current">${k.current}<span class="kpi-unit">${esc(k.unit)}</span></span>
+          <span class="kpi-target">/ ${k.target}${esc(k.unit)}</span>
+        </div>
+        <div class="kpi-bar-track"><div class="kpi-bar-fill ${barColor}" style="width:${Math.min(pct,100)}%"></div></div>
+        <div class="kpi-pct">${pct}%</div>`;
+    }
+    grid.appendChild(div);
+  });
+
+  if (kpiEditMode) {
+    const addDiv = document.createElement('div');
+    addDiv.className = 'kpi-item';
+    addDiv.style.cssText = 'display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);font-size:12px;min-height:60px;';
+    addDiv.textContent = '+ KPI追加';
+    addDiv.onclick = () => {
+      kpiData.push({ label: '新しいKPI', current: 0, target: 100, unit: '件', color: 'var(--text-muted)' });
+      saveKpi(); renderKpi();
+    };
+    grid.appendChild(addDiv);
+  }
+
+  document.getElementById('kpiEditBtn').classList.toggle('active', kpiEditMode);
+}
+
+function toggleKpiEdit() {
+  kpiEditMode = !kpiEditMode;
+  renderKpi();
+}
+
+// ========================================
+// CARD COLLAPSE
+// ========================================
+function toggleCardCollapse(card) {
+  const body = document.getElementById(card + 'Body');
+  const arrow = document.getElementById(card + 'CollapseArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.classList.remove('collapsed');
+  } else {
+    body.style.display = 'none';
+    arrow.classList.add('collapsed');
+  }
+}
+
+function toggleFocus(el) {
+  el.querySelector('.focus-cb').classList.toggle('done');
+  el.querySelector('.focus-name').classList.toggle('done');
+}
+
+// ========================================
+// DAILY OPERATIONS
+// ========================================
+
+const BLOCKS = [
+  { id:'morning', label:'朝', time:'7:00-10:30', startHour:7, endHour:10.5 },
+  { id:'noon', label:'昼', time:'12:00-14:00', startHour:12, endHour:14 },
+  { id:'evening', label:'夕方', time:'15:00-18:00', startHour:15, endHour:18 },
+  { id:'night', label:'夜', time:'21:00', startHour:21, endHour:23 },
+];
+
+const BIZ_OPTIONS = [
+  { id:'shinsei', name:'神聖の光', cls:'biz-tag-shinsei' },
+  { id:'skb', name:'SKB', cls:'biz-tag-skb' },
+  { id:'kaiun', name:'開運', cls:'biz-tag-kaiun' },
+  { id:'tenshi', name:'天賜', cls:'biz-tag-tenshi' },
+  { id:'kaiun-tenshi', name:'開運・天賜', cls:'biz-tag-kaiun-tenshi' },
+  { id:'water', name:'水道', cls:'biz-tag-water' },
+  { id:'ninja', name:'ニンジャ', cls:'biz-tag-ninja' },
+];
+
+const DEFAULT_TASKS = [
+  { id:'t01', name:'神聖の光：一括配信セット（3000-5000通）', biz:'shinsei', block:'morning' },
+  { id:'t02', name:'治さんの配信内容1通＋返信テンプレ作成', biz:'shinsei', block:'morning' },
+  { id:'t03', name:'SKB：宮本課金者の掘り起こし（おはよう）セット', biz:'skb', block:'morning' },
+  { id:'t04', name:'SKB：ステータス3ユーザーへ掘り起こしセット', biz:'skb', block:'morning' },
+  { id:'t05', name:'SKB：一括配信セット（200-300通）', biz:'skb', block:'morning' },
+  { id:'t06', name:'開運：一括配信セット', biz:'kaiun', block:'morning' },
+  { id:'t07', name:'天賜：一括配信セット', biz:'tenshi', block:'morning' },
+  { id:'t08', name:'神聖の光：CSV集計→ログイン数・返信数確認', biz:'shinsei', block:'noon' },
+  { id:'t09', name:'神聖の光：止まりポイント確認→掘り起こし判断', biz:'shinsei', block:'noon' },
+  { id:'t10', name:'SKB：宮本 昼送信（返信なしユーザー）', biz:'skb', block:'noon' },
+  { id:'t11', name:'SKB：止まってるユーザーの掘り起こし', biz:'skb', block:'noon' },
+  { id:'t12', name:'開運・天賜：数字チェック（ログイン・返信・課金者数）', biz:'kaiun-tenshi', block:'noon' },
+  { id:'t13', name:'配信チェックテスト', biz:'kaiun-tenshi', block:'noon' },
+  { id:'t14', name:'広告集計（純広告）：admin更新→CSV＋Excel成形→代理店共有', biz:'kaiun-tenshi', block:'evening' },
+  { id:'t15', name:'カラソル集計→スプレッドシート記入', biz:'kaiun-tenshi', block:'evening' },
+  { id:'t16', name:'SMSデータ取り込み（代理店データ→CSV整形ツール）', biz:'skb', block:'evening' },
+  { id:'t17', name:'神聖の光：CSV集計→ログイン数・返信数確認（夜）', biz:'shinsei', block:'night' },
+  { id:'t18', name:'開運・天賜：数字チェック（夜）', biz:'kaiun-tenshi', block:'night' },
+  { id:'t19', name:'電子マネーコード→買取業者に送付', biz:'skb', block:'night' },
+];
+
+// State
+let opsState = {
+  tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)),
+  today: { date: getToday(), checks: {} },
+  yesterday: null,
+  editMode: false,
+  collapsed: {},
+  filter: 'all',
+};
+
+const OPS_KEY = 'cockpit-daily-ops';
+
+// ── Notion API ──
+// API Key is stored securely in Cloudflare Worker
+const NOTION_DB = '32dc7c5bda4580f99bf8d771454c7e7e';
+const BIZ_NAME_MAP = {
+  'shinsei': '神聖の光', 'skb': 'SKB', 'kaiun': '開運', 'tenshi': '天賜',
+  'kaiun-tenshi': '開運・天賜', 'water': '水道', 'ninja': 'ニンジャ', '個人': '個人'
+};
+
+async function sendToNotion(taskName, bizId, priority) {
+  const bizName = BIZ_NAME_MAP[bizId] || bizId || '';
+  const payload = {
+    parent: { database_id: NOTION_DB },
+    properties: {
+      'タスク': { title: [{ text: { content: taskName } }] },
+    }
+  };
+  if (bizName) payload.properties['事業'] = { select: { name: bizName } };
+  if (priority) payload.properties['優先度'] = { select: { name: priority } };
+
+  const WORKER_URL = 'https://cockpit-proxy.nanimono-furukawa.workers.dev/';
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'pages', payload })
+    });
+    return res.ok;
+  } catch(e) {
+    console.error('Notion send error:', e);
+    return false;
+  }
+}
+
+async function opsSave() {
+  try { await window.storage.set(OPS_KEY, JSON.stringify(opsState)); } catch(e) {}
+}
+
+async function opsLoad() {
+  try {
+    const r = await window.storage.get(OPS_KEY);
+    if (r && r.value) {
+      const saved = JSON.parse(r.value);
+      if (saved.today && saved.today.date !== getToday()) {
+        saved.yesterday = { ...saved.today };
+        saved.today = { date: getToday(), checks: {} };
+      }
+      opsState = { ...opsState, ...saved, editMode: false };
+    }
+  } catch(e) {}
+}
+
+function getToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getNow() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function getCurrentHour() {
+  const d = new Date();
+  return d.getHours() + d.getMinutes() / 60;
+}
+
+function matchesFilter(biz) {
+  const f = opsState.filter;
+  if (f === 'all') return true;
+  if (f === 'kaiun-tenshi') return biz === 'kaiun-tenshi' || biz === 'kaiun' || biz === 'tenshi';
+  if (f === 'kaiun') return biz === 'kaiun' || biz === 'kaiun-tenshi';
+  if (f === 'tenshi') return biz === 'tenshi' || biz === 'kaiun-tenshi';
+  return biz === f;
+}
+
+function setFilter(biz) {
+  opsState.filter = biz;
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.biz === biz);
+  });
+  renderOps();
+}
+
+function renderOps() {
+  document.getElementById('opsDate').textContent = dateStr;
+
+  // Yesterday
+  const yBanner = document.getElementById('yesterdayBanner');
+  const yDetail = document.getElementById('yesterdayDetail');
+  if (opsState.yesterday && opsState.yesterday.date) {
+    yBanner.style.display = 'flex';
+    const yc = opsState.yesterday.checks || {};
+    const yt = opsState.tasks.length;
+    const yd = Object.values(yc).filter(c => c.done).length;
+    document.getElementById('yesterdayStats').textContent = `${yd}/${yt}`;
+    let dh = '';
+    opsState.tasks.forEach(t => {
+      const c = yc[t.id];
+      if (c && c.done) dh += `<div class="yt-row"><span class="yt-check">✓</span>${esc(t.name)}<span class="yt-time">${c.time||''}</span></div>`;
+      else dh += `<div class="yt-row"><span class="yt-miss">✗</span>${esc(t.name)}</div>`;
+    });
+    yDetail.innerHTML = dh;
+  } else {
+    yBanner.style.display = 'none';
+    yDetail.classList.remove('show');
+  }
+
+  // Blocks
+  const container = document.getElementById('blocksContainer');
+  container.innerHTML = '';
+  const curHour = getCurrentHour();
+  let totalDone = 0, totalCount = 0;
+
+  BLOCKS.forEach(block => {
+    const allTasks = opsState.tasks.filter(t => t.block === block.id);
+    const visTasks = allTasks.filter(t => matchesFilter(t.biz));
+    if (visTasks.length === 0 && !opsState.editMode) return;
+
+    totalCount += visTasks.length;
+    const blockDone = visTasks.filter(t => opsState.today.checks[t.id]?.done).length;
+    totalDone += blockDone;
+    const allDone = blockDone === visTasks.length && visTasks.length > 0;
+    const isCurrent = curHour >= block.startHour && curHour < block.endHour;
+    const chipClass = allDone ? 'done' : isCurrent ? 'current' : 'default';
+    const isCol = opsState.collapsed[block.id] || false;
+
+    const bDiv = document.createElement('div');
+    bDiv.className = 'time-block';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'block-header';
+    hdr.onclick = () => { opsState.collapsed[block.id] = !opsState.collapsed[block.id]; renderOps(); };
+    hdr.innerHTML = `
+      <span class="block-time-chip ${chipClass}">${block.time}</span>
+      <span class="block-label">${block.label}</span>
+      <span class="block-progress ${allDone?'all-done':''}">${blockDone}/${visTasks.length}${allDone?' ✓':''}</span>
+      <span class="block-collapse ${isCol?'collapsed':''}">▼</span>`;
+    bDiv.appendChild(hdr);
+
+    const tDiv = document.createElement('div');
+    tDiv.className = 'block-tasks';
+    tDiv.style.maxHeight = isCol ? '0px' : `${visTasks.length * 48 + 50}px`;
+
+    visTasks.forEach(task => {
+      const check = opsState.today.checks[task.id];
+      const isDone = check?.done;
+      const bi = BIZ_OPTIONS.find(b => b.id === task.biz) || { name:'', cls:'' };
+
+      const row = document.createElement('div');
+      row.className = `task-row ${isDone?'checked':''} ${opsState.editMode?'edit-mode':''}`;
+      row.innerHTML = `
+        <div class="task-cb ${isDone?'done':''}" onclick="toggleTask('${task.id}')"></div>
+        <div class="task-content">
+          <div class="task-name">${esc(task.name)}</div>
+          <div class="task-meta"><span class="biz-tag ${bi.cls}">${bi.name}</span></div>
+        </div>
+        ${isDone ? `<span class="task-timestamp">${check.time}</span>` : ''}
+        <div class="edit-controls">
+          <button class="edit-btn-sm up" onclick="moveTask('${task.id}','${block.id}',-1)">↑</button>
+          <button class="edit-btn-sm down" onclick="moveTask('${task.id}','${block.id}',1)">↓</button>
+          <button class="edit-btn-sm del" onclick="deleteTask('${task.id}')">✕</button>
+        </div>`;
+      tDiv.appendChild(row);
+    });
+
+    // Add row
+    const addRow = document.createElement('div');
+    addRow.className = 'add-task-row';
+    addRow.innerHTML = `
+      <input class="add-task-input" type="text" placeholder="タスク名..." id="addIn-${block.id}"
+        onkeydown="if(event.key==='Enter')addTask('${block.id}')">
+      <select class="add-task-select" id="addBiz-${block.id}">
+        ${BIZ_OPTIONS.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}
+      </select>
+      <button class="add-task-btn" onclick="addTask('${block.id}')">追加</button>`;
+    tDiv.appendChild(addRow);
+
+    bDiv.appendChild(tDiv);
+    container.appendChild(bDiv);
+  });
+
+  document.getElementById('totalProgress').textContent = `${totalDone}/${totalCount}`;
+  document.getElementById('editToggle').classList.toggle('active', opsState.editMode);
+}
+
+function toggleTask(id) {
+  if (opsState.editMode) return;
+  if (opsState.today.checks[id]?.done) delete opsState.today.checks[id];
+  else opsState.today.checks[id] = { done: true, time: getNow() };
+  opsSave(); renderOps();
+}
+
+function toggleEdit() {
+  opsState.editMode = !opsState.editMode;
+  renderOps();
+}
+
+function addTask(blockId) {
+  const inp = document.getElementById(`addIn-${blockId}`);
+  const biz = document.getElementById(`addBiz-${blockId}`);
+  const name = inp.value.trim();
+  if (!name) return;
+  opsState.tasks.push({ id: 't'+Date.now(), name, biz: biz.value, block: blockId });
+  inp.value = '';
+  opsSave(); renderOps();
+}
+
+function deleteTask(id) {
+  opsState.tasks = opsState.tasks.filter(t => t.id !== id);
+  delete opsState.today.checks[id];
+  opsSave(); renderOps();
+}
+
+function moveTask(id, blockId, dir) {
+  const bt = opsState.tasks.filter(t => t.block === blockId);
+  const idx = bt.findIndex(t => t.id === id);
+  const ni = idx + dir;
+  if (ni < 0 || ni >= bt.length) return;
+  const g1 = opsState.tasks.findIndex(t => t.id === bt[idx].id);
+  const g2 = opsState.tasks.findIndex(t => t.id === bt[ni].id);
+  [opsState.tasks[g1], opsState.tasks[g2]] = [opsState.tasks[g2], opsState.tasks[g1]];
+  opsSave(); renderOps();
+}
+
+function confirmReset() {
+  if (!confirm('今日のチェックをすべてリセットしますか？\n前日の記録として保存されます。')) return;
+  opsState.yesterday = { ...opsState.today };
+  opsState.today = { date: getToday(), checks: {} };
+  opsSave(); renderOps();
+}
+
+function toggleYesterday() {
+  document.getElementById('yesterdayDetail').classList.toggle('show');
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ========================================
+// AI FEATURES
+// ========================================
+async function suggestToday() {
+  const box = document.getElementById('aiSuggestion');
+  box.className = 'ai-suggestion show';
+  box.innerHTML = '<span class="ai-loading">🤖 考え中...</span>';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `あなたは経営者の朝の意思決定を助けるAIです。以下の事業を運営しています：
+1. 神聖の光（新規占いサイト、キャンペーン運営中）
+2. SKB（占いメール配信、売上低迷中で課金者数改善が急務）
+3. 開運（占いメールサイト、既存運営、目標1500万）
+4. 天賜（占いメールサイト、既存運営）
+5. ニンジャ事業（プライバシー特化スマホ販売、月20台目標）
+6. 水道事業（Lifecare24、広告代理店経由の集客）
+
+今月のテーマ：仕組み化と黒字化
+今日やるべき最も重要な3つのタスクを提案してください。各タスクに事業名タグをつけて、なぜそれが今日重要かも1行で。簡潔に。日本語で。` }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c => c.text || '').join('');
+    box.innerHTML = '<span class="ai-tag">AI提案</span><br>' + text.replace(/\n/g, '<br>');
+  } catch(e) {
+    box.innerHTML = '<span class="ai-tag">AI</span> Claude.aiのアーティファクトとして開くとAI機能が使えます。';
+  }
+}
+
+async function analyzeKeep() {
+  const area = document.getElementById('keepAiArea');
+  const results = document.getElementById('keepAiResults');
+  area.className = 'keep-ai-area show';
+
+  if (memos.length === 0) {
+    results.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">メモがありません。まず上の入力欄からメモを保存してください。</span>';
+    return;
+  }
+
+  results.innerHTML = '<span class="ai-loading">🤖 メモを分析中...</span>';
+  const memoTexts = memos.map(m => '- ' + m.text).join('\n');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `以下はメモです：
+${memoTexts}
+
+この中からタスク（やるべきこと）として取り出すべきものを特定し、JSON配列で返してください。
+事業は: 神聖の光, SKB, 開運, 天賜, ニンジャ, 水道 のいずれか。関係ないものはbizを"個人"に。
+形式：[{"task":"タスク名","biz":"事業名"}]
+JSON配列のみ返してください。` }]
+      })
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    let text = (data.content || []).map(c => c.text || '').join('').trim();
+    text = text.replace(/```json|```/g, '').trim();
+    const tasks = JSON.parse(text);
+    results.innerHTML = '';
+    tasks.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'keep-ai-item';
+      div.innerHTML = `<span>${esc(t.task)} <span class="biz-tag biz-tag-shinsei" style="font-size:8px;">${esc(t.biz)}</span></span>
+        <button onclick="sendKeepTaskToNotion('${t.task.replace(/'/g,"\\'")}','${t.biz}',this)">Notionへ</button>`;
+      results.appendChild(div);
+    });
+  } catch(e) {
+    // Fallback: just show memos as-is with action buttons
+    results.innerHTML = '';
+    memos.forEach((m, i) => {
+      const div = document.createElement('div');
+      div.className = 'keep-ai-item';
+      div.innerHTML = `<span>${esc(m.text)}</span>
+        <button onclick="memoToNotion(${i})">→Notion</button>`;
+      results.appendChild(div);
+    });
+  }
+}
+
+// ========================================
+// CHAT
+// ========================================
+const chatHistory = [{ role: 'assistant', content: 'おはよう。今日は何から始める？' }];
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const mb = document.getElementById('chatMessages');
+  mb.innerHTML += `<div class="chat-msg user">${esc(msg)}</div>`;
+  mb.scrollTop = mb.scrollHeight;
+  chatHistory.push({ role: 'user', content: msg });
+
+  const ld = document.createElement('div');
+  ld.className = 'chat-msg ai';
+  ld.innerHTML = '<span class="ai-loading">考え中...</span>';
+  mb.appendChild(ld);
+  mb.scrollTop = mb.scrollHeight;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `あなたは経営者Makotoの専属AIアシスタントです。事業：神聖の光、SKB、開運、天賜、ニンジャ事業、水道Lifecare24。簡潔で実用的な回答を。日本語で。`,
+        messages: chatHistory.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+      })
+    });
+    const data = await res.json();
+    const reply = data.content.map(c => c.text || '').join('');
+    chatHistory.push({ role: 'assistant', content: reply });
+    ld.innerHTML = esc(reply).replace(/\n/g, '<br>');
+  } catch(e) {
+    ld.innerHTML = 'Claude.aiのアーティファクトとして開くとチャットが使えます。';
+  }
+  mb.scrollTop = mb.scrollHeight;
+}
+
+// ========================================
+// TASK BREAKDOWN
+// ========================================
+let lastBreakdownTasks = [];
+
+async function breakdownTask() {
+  const input = document.getElementById('breakdownInput');
+  const task = input.value.trim();
+  if (!task) return;
+
+  const results = document.getElementById('breakdownResults');
+  const list = document.getElementById('breakdownList');
+  const parent = document.getElementById('breakdownParent');
+  results.classList.add('show');
+  parent.textContent = '🎯 ' + task;
+  list.innerHTML = '<span class="ai-loading" style="font-size:11px;">🤖 分解中...</span>';
+
+  let tasks = null;
+
+  // Try AI breakdown
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `あなたはタスク分解の専門家です。以下の大きなタスクを、すぐ実行できる具体的なスモールタスクに分解してください。
+
+タスク：「${task}」
+
+ルール：
+- 各タスクは30分以内で完了できる粒度にする
+- 曖昧な表現禁止（「検討する」→「A案とB案の比較表を作る」）
+- 順番通りに並べる
+- 目安時間も入れる
+
+JSON配列のみ返してください。他のテキストは一切不要です。形式：
+[{"task":"具体的なタスク名","minutes":15}]` }]
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      let text = (data.content || []).map(c => c.text || '').join('').trim();
+      text = text.replace(/```json|```/g, '').trim();
+      tasks = JSON.parse(text);
+    }
+  } catch(e) {
+    console.log('AI breakdown failed:', e.message);
+  }
+
+  // Fallback: manual input mode if AI fails
+  if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+    list.innerHTML = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">
+        AI分解が使えないため、手動で追加できます。<br>
+        サブタスクを1行ずつ入力して追加してください。
+      </div>
+      <div id="manualBreakdownList"></div>
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <input id="manualSubtask" class="add-task-input" type="text" placeholder="サブタスクを入力..."
+          onkeydown="if(event.key==='Enter')addManualSubtask()" style="flex:1;">
+        <input id="manualMinutes" class="add-task-input" type="number" placeholder="分" style="width:50px;" value="15">
+        <button class="add-task-btn" onclick="addManualSubtask()">追加</button>
+      </div>
+    `;
+    lastBreakdownTasks = [];
+    return;
+  }
+
+  renderBreakdownTasks(tasks);
+}
+
+function addManualSubtask() {
+  const inp = document.getElementById('manualSubtask');
+  const min = document.getElementById('manualMinutes');
+  const name = inp.value.trim();
+  if (!name) return;
+  const minutes = parseInt(min.value) || 15;
+  lastBreakdownTasks.push({ task: name, minutes });
+  inp.value = '';
+
+  const listEl = document.getElementById('manualBreakdownList');
+  const i = lastBreakdownTasks.length - 1;
+  const div = document.createElement('div');
+  div.className = 'breakdown-item';
+  div.innerHTML = `
+    <span class="breakdown-num">${i+1}.</span>
+    <span class="breakdown-text">${esc(name)}</span>
+    <span class="breakdown-time">${minutes}分</span>
+    <button class="breakdown-action-btn btn-to-ops" onclick="addBreakdownToOps(${i})">→オペ</button>
+    <button class="breakdown-action-btn btn-to-notion" onclick="sendBreakdownToNotion(${i})">→Notion</button>
+  `;
+  listEl.appendChild(div);
+}
+
+function renderBreakdownTasks(tasks) {
+  lastBreakdownTasks = tasks;
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'breakdown-item';
+    div.innerHTML = `
+      <span class="breakdown-num">${i+1}.</span>
+      <span class="breakdown-text">${esc(t.task)}</span>
+      <span class="breakdown-time">${t.minutes}分</span>
+      <button class="breakdown-action-btn btn-to-ops" onclick="addBreakdownToOps(${i})">→オペ</button>
+      <button class="breakdown-action-btn btn-to-notion" onclick="sendBreakdownToNotion(${i})">→Notion</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function addBreakdownToOps(idx) {
+  const t = lastBreakdownTasks[idx];
+  if (!t) return;
+  const biz = document.getElementById('breakdownBiz').value;
+  // Add to morning block by default, user can move later
+  const curHour = getCurrentHour();
+  let block = 'morning';
+  if (curHour >= 21) block = 'night';
+  else if (curHour >= 15) block = 'evening';
+  else if (curHour >= 12) block = 'noon';
+
+  opsState.tasks.push({
+    id: 't' + Date.now() + idx,
+    name: t.task,
+    biz: biz,
+    block: block
+  });
+  opsSave();
+  renderOps();
+
+  // Visual feedback
+  const items = document.querySelectorAll('.breakdown-item');
+  if (items[idx]) {
+    const btn = items[idx].querySelector('.btn-to-ops');
+    btn.textContent = '追加済 ✓';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+}
+
+function bulkAddToOps() {
+  const biz = document.getElementById('breakdownBiz').value;
+  const curHour = getCurrentHour();
+  let block = 'morning';
+  if (curHour >= 21) block = 'night';
+  else if (curHour >= 15) block = 'evening';
+  else if (curHour >= 12) block = 'noon';
+
+  lastBreakdownTasks.forEach((t, i) => {
+    opsState.tasks.push({
+      id: 't' + Date.now() + i,
+      name: t.task,
+      biz: biz,
+      block: block
+    });
+  });
+  opsSave();
+  renderOps();
+
+  // Visual feedback
+  document.querySelectorAll('.breakdown-item .btn-to-ops').forEach(btn => {
+    btn.textContent = '追加済 ✓';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  });
+}
+
+async function bulkAddToNotion() {
+  const biz = document.getElementById('breakdownBiz').value;
+  const btns = document.querySelectorAll('.breakdown-item .btn-to-notion');
+  let success = 0;
+  for (let i = 0; i < lastBreakdownTasks.length; i++) {
+    const t = lastBreakdownTasks[i];
+    const ok = await sendToNotion(t.task, biz, '中');
+    if (ok) {
+      success++;
+      if (btns[i]) { btns[i].textContent = '送信済 ✓'; btns[i].disabled = true; btns[i].style.opacity = '0.5'; }
+    }
+  }
+  if (success === lastBreakdownTasks.length) {
+    alert(`${success}件すべてNotionに送信しました ✓`);
+  } else if (success > 0) {
+    alert(`${success}/${lastBreakdownTasks.length}件 送信しました（一部失敗）`);
+  } else {
+    alert('Notion送信に失敗しました。CORSエラーの場合はプロキシが必要です。');
+  }
+}
+
+async function sendBreakdownToNotion(idx) {
+  const t = lastBreakdownTasks[idx];
+  if (!t) return;
+  const biz = document.getElementById('breakdownBiz').value;
+  const items = document.querySelectorAll('.breakdown-item');
+  const btn = items[idx]?.querySelector('.btn-to-notion');
+  if (btn) btn.textContent = '送信中...';
+
+  const ok = await sendToNotion(t.task, biz, '中');
+  if (ok) {
+    if (btn) { btn.textContent = '送信済 ✓'; btn.disabled = true; btn.style.opacity = '0.5'; }
+  } else {
+    if (btn) btn.textContent = '失敗';
+    alert('Notion送信に失敗しました。');
+  }
+}
+
+async function sendKeepTaskToNotion(taskName, bizName, btn) {
+  btn.textContent = '送信中...';
+  const bizId = Object.entries(BIZ_NAME_MAP).find(([k,v]) => v === bizName)?.[0] || '';
+  const ok = await sendToNotion(taskName, bizId, '中');
+  if (ok) {
+    btn.textContent = '送信済 ✓';
+    btn.disabled = true;
+  } else {
+    btn.textContent = '失敗';
+  }
+}
+
+// ========================================
+// TOOLS & PROCEDURES (dynamic)
+// ========================================
+const TOOLS_KEY = 'cockpit-tools';
+const DEFAULT_TOOLS = [
+  { name:'広告集計（純広告）→代理店共有', icon:'📈', link:'https://claude.ai/chat/c9ab0881-2691-4366-b92c-48cd8d0ab334', linkLabel:'Claude',
+    steps:['adminで広告集計を更新して検索','検索表示を10000件にして再検索','CSVでエクスポート（1つ目のファイル）','一覧を全選択コピー→Excelに貼り付け→「広告集計成形用_日付」で保存（2つ目）','上記2ファイルをClaudeに入れて成形集計','各代理店ごとにCSVエクスポートで共有'] },
+  { name:'カラソル集計（1日ごと）', icon:'📊', link:'https://docs.google.com/spreadsheets/d/1Uo5AEJbitKPbiRXL8AdQxZsOiAzYdg1jxf5n1q8SRHc/edit', linkLabel:'スプシ',
+    steps:['広告集計の成形結果からカラソル分を抽出','スプレッドシートに記入'] },
+  { name:'神聖の光：数字集計（昼12時・夜21時）', icon:'🔮', link:'https://claude.ai/chat/1bb0c798-22ce-41ad-ba7d-7d09a7412f2e', linkLabel:'Claude',
+    steps:['会員レベルを全て選択（0日目から全て）して検索','CSVでエクスポート','Claudeに入れて数字を出す → 返信数・ログイン数を確認','止まりポイントを確認 → 掘り起こし判断'] },
+  { name:'神聖の光：配信内容＋キャンペーン作成', icon:'✉️', link:'https://claude.ai/chat/93b60fbf-8cb1-47ce-aa86-d94df049ef71', linkLabel:'Claude',
+    steps:['治さんの毎日の配信内容1通＋返信テンプレ作成','キャンペーン内容作成（同じチャットで）'] },
+  { name:'SKB：SMSデータ取り込み', icon:'📱', link:'https://twicenayon58-dot.github.io/csv-tools/', linkLabel:'CSV整形',
+    steps:['代理店から来たデータを受領','CSV取り込みツールで整形','整形後のデータをシステムに取り込み'] },
+  { name:'経費・領収書管理', icon:'💰', link:'https://expense-hub-two.vercel.app/', linkLabel:'経費',
+    steps:['領収書を読み込ませるだけで経費登録','支払い管理：いつ・いくら・どこから'] },
+];
+
+let toolsData = JSON.parse(JSON.stringify(DEFAULT_TOOLS));
+let toolsEditMode = false;
+let toolsExpanded = {};
+
+async function loadTools() {
+  try {
+    const r = await window.storage.get(TOOLS_KEY);
+    if (r && r.value) toolsData = JSON.parse(r.value);
+  } catch(e) {}
+}
+async function saveTools() {
+  try { await window.storage.set(TOOLS_KEY, JSON.stringify(toolsData)); } catch(e) {}
+}
+
+function renderTools() {
+  const grid = document.getElementById('toolsGrid');
+  grid.innerHTML = '';
+
+  toolsData.forEach((tool, i) => {
+    const isOpen = toolsExpanded[i];
+    const item = document.createElement('div');
+    item.className = 'tool-item';
+
+    if (toolsEditMode) {
+      // Edit mode
+      let stepsHtml = tool.steps.map((s, si) =>
+        `<div style="display:flex;gap:4px;align-items:center;padding:2px 0 2px 22px;">
+          <span class="step-num">${si+1}.</span>
+          <input value="${esc(s)}" onchange="toolsData[${i}].steps[${si}]=this.value;saveTools()"
+            style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:3px 5px;font-family:'Noto Sans JP',sans-serif;">
+          <button class="edit-btn-sm del" onclick="toolsData[${i}].steps.splice(${si},1);saveTools();renderTools()">✕</button>
+        </div>`
+      ).join('');
+
+      item.innerHTML = `
+        <div style="padding:6px 4px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;gap:4px;align-items:center;">
+            <input value="${esc(tool.icon)}" onchange="toolsData[${i}].icon=this.value;saveTools()"
+              style="width:30px;text-align:center;font-size:14px;border:1px solid var(--border);border-radius:3px;padding:2px;">
+            <input value="${esc(tool.name)}" onchange="toolsData[${i}].name=this.value;saveTools()"
+              style="flex:1;font-size:11px;font-weight:500;border:1px solid var(--border);border-radius:3px;padding:3px 5px;font-family:'Noto Sans JP',sans-serif;">
+            <button class="edit-btn-sm del" onclick="toolsData.splice(${i},1);saveTools();renderTools()">✕</button>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;padding-left:34px;">
+            <span style="font-size:9px;color:var(--text-muted);">URL:</span>
+            <input value="${esc(tool.link||'')}" onchange="toolsData[${i}].link=this.value;saveTools()"
+              style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;">
+            <span style="font-size:9px;color:var(--text-muted);">ラベル:</span>
+            <input value="${esc(tool.linkLabel||'')}" onchange="toolsData[${i}].linkLabel=this.value;saveTools()"
+              style="width:50px;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:2px 5px;">
+          </div>
+          ${stepsHtml}
+          <button class="add-task-btn" onclick="toolsData[${i}].steps.push('新しい手順');saveTools();renderTools()"
+            style="margin-left:22px;font-size:10px;padding:3px 8px;width:auto;align-self:flex-start;">+ 手順追加</button>
+        </div>`;
+    } else {
+      // View mode
+      let stepsHtml = tool.steps.map((s, si) =>
+        `<div class="tool-step"><span class="step-num">${si+1}.</span>${esc(s)}</div>`
+      ).join('');
+
+      item.innerHTML = `
+        <div class="tool-header" onclick="toolsExpanded[${i}]=!toolsExpanded[${i}];renderTools()">
+          <span class="tool-icon">${tool.icon}</span>
+          <span class="tool-name">${esc(tool.name)}</span>
+          ${tool.link ? `<a class="tool-link" href="${esc(tool.link)}" target="_blank" onclick="event.stopPropagation()">${esc(tool.linkLabel||'開く')}</a>` : ''}
+          <span class="tool-expand ${isOpen?'open':''}">▼</span>
+        </div>
+        <div class="tool-steps ${isOpen?'open':''}">${stepsHtml}</div>`;
+    }
+    grid.appendChild(item);
+  });
+
+  // Add tool button in edit mode
+  if (toolsEditMode) {
+    const addBtn = document.createElement('div');
+    addBtn.className = 'tool-item';
+    addBtn.style.cssText = 'padding:10px;text-align:center;cursor:pointer;color:var(--accent);font-size:12px;font-weight:500;';
+    addBtn.textContent = '+ ツール追加';
+    addBtn.onclick = () => {
+      toolsData.push({ name:'新しいツール', icon:'🔧', link:'', linkLabel:'', steps:['手順1'] });
+      saveTools(); renderTools();
+    };
+    grid.appendChild(addBtn);
+  }
+
+  document.getElementById('toolsEditBtn').classList.toggle('active', toolsEditMode);
+}
+
+function toggleToolsEdit() {
+  toolsEditMode = !toolsEditMode;
+  renderTools();
+}
+
+function toggleTool(header) {
+  const steps = header.nextElementSibling;
+  const arrow = header.querySelector('.tool-expand');
+  steps.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ========================================
+// INIT
+// ========================================
+async function init() {
+  await opsLoad();
+  await loadFocus();
+  await loadMemos();
+  await loadKpi();
+  await loadTools();
+  renderOps();
+  renderFocus();
+  renderMemos();
+  renderKpi();
+  renderTools();
+  setInterval(renderOps, 60000);
+}
+init();
+</script>
+</body>
+</html>
