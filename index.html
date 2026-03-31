@@ -1243,6 +1243,42 @@ const DEFAULT_TOOLS = [
   { name:'書類発行（請求書・領収書・給料明細）', icon:'📄', link:'https://script.google.com/macros/s/AKfycbw7962H9f7l_2nnhj_7cT8EkZVj7rxMCSE5wn5Uquvb2F4vaTDUYzSA7slM9xx9D7rc/exec', linkLabel:'GAS',
     steps:['種類を選択（請求書・領収書・給料明細）','必要事項を入力して発行'] },
 ];
+const DEFAULT_TASKS = [
+  { id:'t01', name:'神聖の光：一括配信セット（3000-5000通）', biz:'shinsei', block:'morning' },
+  { id:'t02', name:'治さんの配信内容1通＋返信テンプレ作成', biz:'shinsei', block:'morning' },
+  { id:'t03', name:'SKB：宮本課金者の掘り起こし（おはよう）セット', biz:'skb', block:'morning' },
+  { id:'t04', name:'SKB：ステータス3ユーザーへ掘り起こしセット', biz:'skb', block:'morning' },
+  { id:'t05', name:'SKB：一括配信セット（200-300通）', biz:'skb', block:'morning' },
+  { id:'t06', name:'開運：一括配信セット', biz:'kaiun', block:'morning' },
+  { id:'t07', name:'天賜：一括配信セット', biz:'tenshi', block:'morning' },
+  { id:'t08', name:'神聖の光：CSV集計→ログイン数・返信数確認', biz:'shinsei', block:'noon' },
+  { id:'t09', name:'神聖の光：止まりポイント確認→掘り起こし判断', biz:'shinsei', block:'noon' },
+  { id:'t10', name:'SKB：宮本 昼送信（返信なしユーザー）', biz:'skb', block:'noon' },
+  { id:'t11', name:'SKB：止まってるユーザーの掘り起こし', biz:'skb', block:'noon' },
+  { id:'t12', name:'開運・天賜：数字チェック（ログイン・返信・課金者数）', biz:'kaiun-tenshi', block:'noon' },
+  { id:'t13', name:'配信チェックテスト', biz:'kaiun-tenshi', block:'noon' },
+  { id:'t14', name:'広告集計（純広告）：admin更新→CSV＋Excel成形→代理店共有', biz:'kaiun-tenshi', block:'evening' },
+  { id:'t15', name:'カラソル集計→スプレッドシート記入', biz:'kaiun-tenshi', block:'evening' },
+  { id:'t16', name:'SMSデータ取り込み（代理店データ→CSV整形ツール）', biz:'skb', block:'evening' },
+  { id:'t17', name:'神聖の光：CSV集計→ログイン数・返信数確認（夜）', biz:'shinsei', block:'night' },
+  { id:'t18', name:'開運・天賜：数字チェック（夜）', biz:'kaiun-tenshi', block:'night' },
+  { id:'t19', name:'電子マネーコード→買取業者に送付', biz:'skb', block:'night' },
+];
+```
+
+---
+
+### STEP 2：古い `DEFAULT_TOOLS` を削除
+
+ファイル内で以下を**まるごと削除**（`// TOOLS & PROCEDURES` セクションの中にある）：
+```
+const DEFAULT_TOOLS = [
+  { name:'広告集計（純広告）→代理店共有',
+```
+から
+```
+    steps:['領収書を読み込ませるだけで経費登録','支払い管理：いつ・いくら・どこから'] },
+];
 
 // State
 let opsState = {
