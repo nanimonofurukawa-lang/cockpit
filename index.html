@@ -1210,26 +1210,38 @@ const BIZ_OPTIONS = [
   { id:'personal', name:'個人', cls:'biz-tag-personal' },
 ];
 
-const DEFAULT_TASKS = [
-  { id:'t01', name:'神聖の光：一括配信セット（3000-5000通）', biz:'shinsei', block:'morning' },
-  { id:'t02', name:'治さんの配信内容1通＋返信テンプレ作成', biz:'shinsei', block:'morning' },
-  { id:'t03', name:'SKB：宮本課金者の掘り起こし（おはよう）セット', biz:'skb', block:'morning' },
-  { id:'t04', name:'SKB：ステータス3ユーザーへ掘り起こしセット', biz:'skb', block:'morning' },
-  { id:'t05', name:'SKB：一括配信セット（200-300通）', biz:'skb', block:'morning' },
-  { id:'t06', name:'開運：一括配信セット', biz:'kaiun', block:'morning' },
-  { id:'t07', name:'天賜：一括配信セット', biz:'tenshi', block:'morning' },
-  { id:'t08', name:'神聖の光：CSV集計→ログイン数・返信数確認', biz:'shinsei', block:'noon' },
-  { id:'t09', name:'神聖の光：止まりポイント確認→掘り起こし判断', biz:'shinsei', block:'noon' },
-  { id:'t10', name:'SKB：宮本 昼送信（返信なしユーザー）', biz:'skb', block:'noon' },
-  { id:'t11', name:'SKB：止まってるユーザーの掘り起こし', biz:'skb', block:'noon' },
-  { id:'t12', name:'開運・天賜：数字チェック（ログイン・返信・課金者数）', biz:'kaiun-tenshi', block:'noon' },
-  { id:'t13', name:'配信チェックテスト', biz:'kaiun-tenshi', block:'noon' },
-  { id:'t14', name:'広告集計（純広告）：admin更新→CSV＋Excel成形→代理店共有', biz:'kaiun-tenshi', block:'evening' },
-  { id:'t15', name:'カラソル集計→スプレッドシート記入', biz:'kaiun-tenshi', block:'evening' },
-  { id:'t16', name:'SMSデータ取り込み（代理店データ→CSV整形ツール）', biz:'skb', block:'evening' },
-  { id:'t17', name:'神聖の光：CSV集計→ログイン数・返信数確認（夜）', biz:'shinsei', block:'night' },
-  { id:'t18', name:'開運・天賜：数字チェック（夜）', biz:'kaiun-tenshi', block:'night' },
-  { id:'t19', name:'電子マネーコード→買取業者に送付', biz:'skb', block:'night' },
+const DEFAULT_TOOLS = [
+  // ── 分析ダッシュボード系 ──
+  { name:'開運ドットコム：分析ダッシュボード', icon:'☽', link:'https://twicenayon58-dot.github.io/tools/kaiun_com-dashboard.html', linkLabel:'開く',
+    steps:['CSVをドロップして読み込む','キャリア別・広告コード別タブで確認','止まりポイント確認→掘り起こし判断'] },
+  { name:'開運ドットコム：推移トラッカー', icon:'📈', link:'https://twicenayon58-dot.github.io/tools/kaiun-trend-tracker.html', linkLabel:'開く',
+    steps:['12時・21時の定時スナップショットを記録','前日との差分を確認'] },
+  { name:'天賜の泉：分析ダッシュボード', icon:'〇', link:'https://twicenayon58-dot.github.io/tools/tenshinoizumi-dashboard.html', linkLabel:'開く',
+    steps:['CSVをドロップして読み込む','ステータス別・課金分析タブで確認'] },
+  { name:'天賜の泉：推移トラッカー', icon:'📈', link:'https://twicenayon58-dot.github.io/tools/tenshin-trend-tracker.html', linkLabel:'開く',
+    steps:['12時・21時の定時スナップショットを記録','前日との差分を確認'] },
+  { name:'神聖の光：分析ダッシュボード', icon:'🔮', link:'https://twicenayon58-dot.github.io/tools/sinseinohikari-dashboard.html', linkLabel:'開く',
+    steps:['会員レベルを全て選択して検索','CSVエクスポート→ドロップして読み込む','返信数・ログイン数確認','止まりポイント確認→掘り起こし判断'] },
+  { name:'SKB：分析ダッシュボード', icon:'📊', link:'https://twicenayon58-dot.github.io/tools/site2-dashboard.html', linkLabel:'開く',
+    steps:['CSVをドロップして読み込む','課金分析・広告コード別タブで確認'] },
+  // ── 集計・抽出系 ──
+  { name:'広告集計ツール（CSV＋Excel→代理店共有）', icon:'📉', link:'https://twicenayon58-dot.github.io/tools/ad_analytics.html', linkLabel:'開く',
+    steps:['adminで広告集計を更新して検索','検索表示を10000件にして再検索','CSVエクスポート（1つ目）','一覧を全選択コピー→Excelに貼り付けて保存（2つ目）','上記2ファイルをツールにドロップ→集計確認','各代理店ごとにCSVエクスポートで共有'] },
+  { name:'会員ID抽出ツール', icon:'🔍', link:'https://twicenayon58-dot.github.io/tools/id_extractor.html', linkLabel:'開く',
+    steps:['CSVをドロップして読み込む','広告コード別に件数を設定','抽出実行→CSVダウンロード'] },
+  { name:'カラソル集計（1日ごと）', icon:'📊', link:'https://docs.google.com/spreadsheets/d/1Uo5AEJbitKPbiRXL8AdQxZsOiAzYdg1jxf5n1q8SRHc/edit', linkLabel:'スプシ',
+    steps:['広告集計ツールの結果からカラソル分を抽出','スプレッドシートに記入'] },
+  // ── CSV整形系 ──
+  { name:'SKB：SMSデータ取り込み', icon:'📱', link:'https://twicenayon58-dot.github.io/csv-tools/', linkLabel:'CSV整形',
+    steps:['代理店から来たデータを受領','CSV取り込みツールで整形','整形後のデータをシステムに取り込み'] },
+  // ── 配信・キャンペーン系 ──
+  { name:'神聖の光：配信内容＋キャンペーン作成', icon:'✉️', link:'https://claude.ai/chat/93b60fbf-8cb1-47ce-aa86-d94df049ef71', linkLabel:'Claude',
+    steps:['治さんの毎日の配信内容1通＋返信テンプレ作成','キャンペーン内容作成（同じチャットで）'] },
+  // ── 経営・法人系 ──
+  { name:'経費・領収書管理', icon:'💰', link:'https://expense-hub-two.vercel.app/', linkLabel:'経費Hub',
+    steps:['領収書を読み込ませるだけで経費登録','支払い管理：いつ・いくら・どこから'] },
+  { name:'書類発行（請求書・領収書・給料明細）', icon:'📄', link:'https://script.google.com/macros/s/AKfycbw7962H9f7l_2nnhj_7cT8EkZVj7rxMCSE5wn5Uquvb2F4vaTDUYzSA7slM9xx9D7rc/exec', linkLabel:'GAS',
+    steps:['種類を選択（請求書・領収書・給料明細）','必要事項を入力して発行'] },
 ];
 
 // State
