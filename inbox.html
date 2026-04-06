@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<title>in.box</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface2: #242442;
+  --border: #2d2d4a;
+  --text: #e8e8f0;
+  --text2: #9898b0;
+  --text3: #5858708;
+  --accent: #6c5ce7;
+  --accent2: #a29bfe;
+  --green: #00b894;
+  --red: #e17055;
+  --orange: #fdcb6e;
+  --blue: #74b9ff;
+  --pink: #fd79a8;
+  --tag-shinsei: #74b9ff;
+  --tag-skb: #e17055;
+  --tag-kaiun: #fdcb6e;
+  --tag-tenshi: #fd79a8;
+  --tag-ninja: #a29bfe;
+  --tag-water: #81ecec;
+  --tag-memo: #636e72;
+  --tag-personal: #b2bec3;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.app-header {
+  background: var(--surface);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+.app-logo { font-size: 18px; font-weight: 700; color: var(--accent2); letter-spacing: -0.5px; }
+.app-logo span { color: var(--text2); font-weight: 300; font-size: 12px; margin-left: 6px; }
+.header-actions { display: flex; gap: 8px; }
+.hdr-btn {
+  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+}
+.hdr-btn:hover, .hdr-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ── Tags Bar ── */
+.tags-bar {
+  background: var(--surface);
+  padding: 8px 16px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+.tags-bar::-webkit-scrollbar { display: none; }
+.tag-pill {
+  font-size: 11px; font-weight: 500; padding: 5px 12px;
+  border-radius: 20px; white-space: nowrap; cursor: pointer;
+  transition: all 0.15s; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2);
+  flex-shrink: 0;
+}
+.tag-pill.active { border-color: var(--accent); background: var(--accent); color: white; }
+.tag-pill[data-tag="神聖の光"].active { background: var(--tag-shinsei); border-color: var(--tag-shinsei); }
+.tag-pill[data-tag="SKB"].active { background: var(--tag-skb); border-color: var(--tag-skb); }
+.tag-pill[data-tag="開運"].active { background: var(--tag-kaiun); border-color: var(--tag-kaiun); color: #333; }
+.tag-pill[data-tag="天賜"].active { background: var(--tag-tenshi); border-color: var(--tag-tenshi); }
+.tag-pill[data-tag="ニンジャ"].active { background: var(--tag-ninja); border-color: var(--tag-ninja); }
+.tag-pill[data-tag="水道"].active { background: var(--tag-water); border-color: var(--tag-water); color: #333; }
+.tag-pill[data-tag="メモ"].active { background: var(--tag-memo); border-color: var(--tag-memo); }
+
+/* ── Search ── */
+.search-bar {
+  display: none;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-bar.show { display: block; }
+.search-input {
+  width: 100%; padding: 8px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px; outline: none;
+}
+.search-input:focus { border-color: var(--accent); }
+
+/* ── Memo List ── */
+.memo-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.memo-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  position: relative;
+  transition: transform 0.15s, opacity 0.15s;
+  touch-action: pan-y;
+}
+.memo-item.important {
+  border-left: 3px solid var(--red);
+}
+.memo-item.done {
+  opacity: 0.4;
+}
+.memo-item.done .memo-text {
+  text-decoration: line-through;
+}
+
+.memo-text {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.memo-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.memo-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+.memo-tag {
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.memo-tag-add {
+  font-size: 9px;
+  color: var(--text2);
+  padding: 2px 6px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.memo-tag-add:hover { border-color: var(--accent); color: var(--accent); }
+.mt-shinsei { background: rgba(116,185,255,0.15); color: var(--tag-shinsei); }
+.mt-skb { background: rgba(225,112,85,0.15); color: var(--tag-skb); }
+.mt-kaiun { background: rgba(253,203,110,0.15); color: var(--tag-kaiun); }
+.mt-tenshi { background: rgba(253,121,168,0.15); color: var(--tag-tenshi); }
+.mt-ninja { background: rgba(162,155,254,0.15); color: var(--tag-ninja); }
+.mt-water { background: rgba(129,236,236,0.15); color: var(--tag-water); }
+.mt-memo { background: rgba(99,110,114,0.15); color: var(--tag-memo); }
+.mt-personal { background: rgba(178,190,195,0.15); color: var(--tag-personal); }
+
+/* Swipe hint */
+.memo-actions {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.memo-actions.show { display: flex; }
+.ma-btn {
+  flex: 1;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: none;
+}
+.ma-important { background: rgba(225,112,85,0.15); color: var(--red); }
+.ma-important:hover { background: var(--red); color: white; }
+.ma-done { background: rgba(0,184,148,0.15); color: var(--green); }
+.ma-done:hover { background: var(--green); color: white; }
+.ma-tag { background: rgba(108,92,231,0.15); color: var(--accent2); }
+.ma-tag:hover { background: var(--accent); color: white; }
+.ma-delete { background: rgba(99,110,114,0.15); color: var(--text2); }
+.ma-delete:hover { background: #636e72; color: white; }
+
+/* Tag picker modal */
+.tag-modal {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  z-index: 200;
+  animation: slideUp 0.2s ease;
+}
+.tag-modal.show { display: block; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.tag-modal-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text2); }
+.tag-modal-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.tag-modal-item {
+  padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.12s; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text);
+}
+.tag-modal-item:hover { border-color: var(--accent); }
+.tag-modal-item.selected { background: var(--accent); color: white; border-color: var(--accent); }
+.tag-modal-close {
+  margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px;
+  background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+  font-family: 'Noto Sans JP', sans-serif; font-size: 13px; cursor: pointer;
+}
+.tag-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199;
+}
+.tag-overlay.show { display: block; }
+
+/* ── Input Bar ── */
+.input-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  padding-bottom: calc(10px + var(--safe-bottom));
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.input-text {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 10px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+.input-text:focus { border-color: var(--accent); }
+.input-text::placeholder { color: var(--text3); }
+.send-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: #5a4bd4; }
+
+/* ── Loading ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  color: var(--text2);
+  font-size: 13px;
+}
+.loading::before {
+  content: '';
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Empty ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text2);
+  font-size: 13px;
+  gap: 8px;
+}
+.empty-icon { font-size: 32px; opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-logo">in.box<span>→ Notion</span></div>
+  <div class="header-actions">
+    <button class="hdr-btn" id="searchToggle" onclick="toggleSearch()">🔍</button>
+    <button class="hdr-btn" onclick="loadMemos()">↻</button>
+  </div>
+</header>
+
+<div class="tags-bar" id="tagsBar">
+  <div class="tag-pill active" data-tag="all" onclick="filterTag('all')">すべて</div>
+  <div class="tag-pill" data-tag="メモ" onclick="filterTag('メモ')">メモ</div>
+  <div class="tag-pill" data-tag="神聖の光" onclick="filterTag('神聖の光')">神聖の光</div>
+  <div class="tag-pill" data-tag="SKB" onclick="filterTag('SKB')">SKB</div>
+  <div class="tag-pill" data-tag="開運" onclick="filterTag('開運')">開運</div>
+  <div class="tag-pill" data-tag="天賜" onclick="filterTag('天賜')">天賜</div>
+  <div class="tag-pill" data-tag="ニンジャ" onclick="filterTag('ニンジャ')">ニンジャ</div>
+  <div class="tag-pill" data-tag="水道" onclick="filterTag('水道')">水道</div>
+  <div class="tag-pill" data-tag="個人" onclick="filterTag('個人')">個人</div>
+</div>
+
+<div class="search-bar" id="searchBar">
+  <input class="search-input" id="searchInput" type="text" placeholder="メモを検索..."
+    oninput="filterMemos()">
+</div>
+
+<div class="memo-list" id="memoList">
+  <div class="loading" id="loadingState">読み込み中...</div>
+</div>
+
+<div class="input-bar">
+  <textarea class="input-text" id="inputText" rows="1" placeholder="メモ・タスク・なんでも..."
+    oninput="autoResize(this)"></textarea>
+  <button class="send-btn" onclick="sendMemo()">↑</button>
+</div>
+
+<!-- Tag picker modal -->
+<div class="tag-overlay" id="tagOverlay" onclick="closeTagModal()"></div>
+<div class="tag-modal" id="tagModal">
+  <div class="tag-modal-title">タグを選択</div>
+  <div class="tag-modal-grid" id="tagModalGrid"></div>
+  <button class="tag-modal-close" onclick="closeTagModal()">閉じる</button>
+</div>
+
+<script>
+const WORKER = 'https://cockpit-proxy.nanimono-furukawa.workers.dev';
+const DB_ID = '32dc7c5bda4580f99bf8d771454c7e7e';
+
+const TAGS = ['メモ','神聖の光','SKB','開運','天賜','ニンジャ','水道','個人'];
+const TAG_CLASS = {'神聖の光':'mt-shinsei','SKB':'mt-skb','開運':'mt-kaiun','天賜':'mt-tenshi','ニンジャ':'mt-ninja','水道':'mt-water','メモ':'mt-memo','個人':'mt-personal'};
+
+let memos = [];
+let activeFilter = 'all';
+let searchQuery = '';
+let editingTagId = null;
+
+// ── Send memo to Notion ──
+async function sendMemo() {
+  const input = document.getElementById('inputText');
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Get active filter as default tag
+  const defaultTag = activeFilter !== 'all' ? activeFilter : 'メモ';
+
+  input.value = '';
+  input.style.height = '40px';
+
+  // Optimistic: add to UI immediately
+  const tempId = 'temp-' + Date.now();
+  const now = new Date();
+  memos.unshift({
+    id: tempId,
+    text: text,
+    tags: [defaultTag],
+    done: false,
+    important: false,
+    created: now.toISOString(),
+    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+  });
+  renderMemos();
+
+  // Send to Notion
+  try {
+    const payload = {
+      parent: { database_id: DB_ID },
+      properties: {
+        'タスク': { title: [{ text: { content: text } }] },
+        '事業': { multi_select: [{ name: defaultTag }] }
+      }
+    };
+
+    const res = await fetch(WORKER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'pages', payload })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Replace temp ID with real ID
+      const idx = memos.findIndex(m => m.id === tempId);
+      if (idx !== -1) memos[idx].id = data.id;
+    }
+  } catch(e) {
+    console.error('Send failed:', e);
+  }
+}
+
+// ── Load memos from Notion ──
+async function loadMemos() {
+  const list = document.getElementById('memoList');
+  list.innerHTML = '<div class="loading">読み込み中...</div>';
+
+  try {
+    const payload = {
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+      page_size: 100
+    };
+
+    const res = await fetch(WORKER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: `databases/${DB_ID}/query`, payload })
+    });
+
+    if (!res.ok) throw new Error('Load failed');
+    const data = await res.json();
+
+    memos = (data.results || []).map(page => {
+      const title = page.properties?.['タスク']?.title?.[0]?.plain_text || '';
+      const tags = (page.properties?.['事業']?.multi_select || []).map(t => t.name);
+      const status = page.properties?.['ステータス']?.status?.name || '未着手';
+      const created = page.created_time;
+      const d = new Date(created);
+      const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+
+      return {
+        id: page.id,
+        text: title,
+        tags: tags,
+        done: status === '完了',
+        important: false,
+        created: created,
+        time: `${dateStr} ${time}`
+      };
+    });
+
+    renderMemos();
+  } catch(e) {
+    console.error('Load error:', e);
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">⚠️</span>読み込みに失敗しました<br>↻ ボタンで再試行</div>';
+  }
+}
+
+// ── Render memos ──
+function renderMemos() {
+  const list = document.getElementById('memoList');
+  let filtered = memos;
+
+  // Tag filter
+  if (activeFilter !== 'all') {
+    filtered = filtered.filter(m => m.tags.includes(activeFilter));
+  }
+
+  // Search filter
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(m => m.text.toLowerCase().includes(q));
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">📝</span>メモがありません</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(memo => {
+    const div = document.createElement('div');
+    div.className = `memo-item ${memo.important ? 'important' : ''} ${memo.done ? 'done' : ''}`;
+    div.onclick = () => toggleActions(memo.id);
+
+    const tagsHtml = memo.tags.map(t => {
+      const cls = TAG_CLASS[t] || 'mt-memo';
+      return `<span class="memo-tag ${cls}">${esc(t)}</span>`;
+    }).join('');
+
+    div.innerHTML = `
+      <div class="memo-text">${esc(memo.text)}</div>
+      <div class="memo-meta">
+        <span class="memo-time">${memo.time}</span>
+        ${tagsHtml}
+        <span class="memo-tag-add" onclick="event.stopPropagation();openTagModal('${memo.id}')">+ タグ</span>
+      </div>
+      <div class="memo-actions" id="actions-${memo.id}">
+        <button class="ma-btn ma-important" onclick="event.stopPropagation();toggleImportant('${memo.id}')">${memo.important ? '★ 解除' : '★ 重要'}</button>
+        <button class="ma-btn ma-done" onclick="event.stopPropagation();toggleDone('${memo.id}')">${memo.done ? '↩ 戻す' : '✓ 完了'}</button>
+        <button class="ma-btn ma-tag" onclick="event.stopPropagation();openTagModal('${memo.id}')">🏷 タグ</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ── Actions ──
+function toggleActions(id) {
+  const el = document.getElementById('actions-' + id);
+  if (el) el.classList.toggle('show');
+}
+
+function toggleImportant(id) {
+  const memo = memos.find(m => m.id === id);
+  if (memo) {
+    memo.important = !memo.important;
+    renderMemos();
+  }
+}
+
+async function toggleDone(id) {
+  const memo = memos.find(m => m.id === id);
+  if (!memo) return;
+  memo.done = !memo.done;
+  renderMemos();
+
+  // Update in Notion
+  if (!id.startsWith('temp-')) {
+    const newStatus = memo.done ? '完了' : '未着手';
+    try {
+      await fetch(WORKER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: `pages/${id}`,
+          method: 'PATCH',
+          payload: {
+            properties: {
+              'ステータス': { status: { name: newStatus } }
+            }
+          }
+        })
+      });
+    } catch(e) { console.error('Status update failed:', e); }
+  }
+}
+
+// ── Tag Modal ──
+function openTagModal(id) {
+  editingTagId = id;
+  const memo = memos.find(m => m.id === id);
+  const grid = document.getElementById('tagModalGrid');
+  grid.innerHTML = '';
+  TAGS.forEach(tag => {
+    const selected = memo?.tags.includes(tag);
+    const div = document.createElement('div');
+    div.className = `tag-modal-item ${selected ? 'selected' : ''}`;
+    div.textContent = tag;
+    div.onclick = () => toggleTag(id, tag);
+    grid.appendChild(div);
+  });
+  document.getElementById('tagOverlay').classList.add('show');
+  document.getElementById('tagModal').classList.add('show');
+}
+
+function closeTagModal() {
+  document.getElementById('tagOverlay').classList.remove('show');
+  document.getElementById('tagModal').classList.remove('show');
+  editingTagId = null;
+}
+
+async function toggleTag(id, tag) {
+  const memo = memos.find(m => m.id === id);
+  if (!memo) return;
+
+  const idx = memo.tags.indexOf(tag);
+  if (idx !== -1) {
+    memo.tags.splice(idx, 1);
+  } else {
+    memo.tags.push(tag);
+  }
+
+  // Re-render modal
+  openTagModal(id);
+  renderMemos();
+
+  // Update in Notion
+  if (!id.startsWith('temp-')) {
+    try {
+      await fetch(WORKER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: `pages/${id}`,
+          method: 'PATCH',
+          payload: {
+            properties: {
+              '事業': { multi_select: memo.tags.map(t => ({ name: t })) }
+            }
+          }
+        })
+      });
+    } catch(e) { console.error('Tag update failed:', e); }
+  }
+}
+
+// ── Filter ──
+function filterTag(tag) {
+  activeFilter = tag;
+  document.querySelectorAll('.tag-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.tag === tag);
+  });
+  renderMemos();
+}
+
+function toggleSearch() {
+  const bar = document.getElementById('searchBar');
+  const btn = document.getElementById('searchToggle');
+  bar.classList.toggle('show');
+  btn.classList.toggle('active');
+  if (bar.classList.contains('show')) {
+    document.getElementById('searchInput').focus();
+  } else {
+    document.getElementById('searchInput').value = '';
+    searchQuery = '';
+    renderMemos();
+  }
+}
+
+function filterMemos() {
+  searchQuery = document.getElementById('searchInput').value;
+  renderMemos();
+}
+
+// ── Utils ──
+function autoResize(el) {
+  el.style.height = '40px';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Init ──
+loadMemos();
+</script>
+</body>
+</html>
