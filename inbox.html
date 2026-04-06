@@ -381,7 +381,8 @@ body {
 const WORKER = 'https://cockpit-proxy.nanimono-furukawa.workers.dev';
 const DB_ID = '32dc7c5bda4580f99bf8d771454c7e7e';
 
-const TAGS = ['メモ','神聖の光','SKB','開運','天賜','ニンジャ','水道','個人'];
+const DEFAULT_TAGS = ['メモ','神聖の光','SKB','開運','天賜','ニンジャ','水道','個人'];
+let TAGS = [...DEFAULT_TAGS];
 const TAG_CLASS = {'神聖の光':'mt-shinsei','SKB':'mt-skb','開運':'mt-kaiun','天賜':'mt-tenshi','ニンジャ':'mt-ninja','水道':'mt-water','メモ':'mt-memo','個人':'mt-personal'};
 
 let memos = [];
@@ -483,6 +484,7 @@ async function loadMemos() {
     });
 
     renderMemos();
+    rebuildTagBar();
   } catch(e) {
     console.error('Load error:', e);
     list.innerHTML = '<div class="empty-state"><span class="empty-icon">⚠️</span>読み込みに失敗しました<br>↻ ボタンで再試行</div>';
@@ -593,8 +595,74 @@ function openTagModal(id) {
     div.onclick = () => toggleTag(id, tag);
     grid.appendChild(div);
   });
+  // Add custom tag input
+  const addDiv = document.createElement('div');
+  addDiv.style.cssText = 'display:flex;gap:6px;width:100%;margin-top:8px;';
+  addDiv.innerHTML = `<input id="newTagInput" type="text" placeholder="新しいタグ名..."
+    onkeydown="if(event.key==='Enter'&&!event.isComposing)addCustomTag('${id}')"
+    style="flex:1;padding:8px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:12px;outline:none;">
+    <button onclick="addCustomTag('${id}')" style="padding:8px 14px;border-radius:12px;background:var(--accent);color:white;border:none;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;">追加</button>`;
+  grid.appendChild(addDiv);
   document.getElementById('tagOverlay').classList.add('show');
   document.getElementById('tagModal').classList.add('show');
+}
+
+async function addCustomTag(id) {
+  const inp = document.getElementById('newTagInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  // Add to TAGS if not exists
+  if (!TAGS.includes(name)) {
+    TAGS.push(name);
+    rebuildTagBar();
+  }
+  // Add to memo
+  const memo = memos.find(m => m.id === id);
+  if (memo && !memo.tags.includes(name)) {
+    memo.tags.push(name);
+    renderMemos();
+    // Update Notion
+    if (!id.startsWith('temp-')) {
+      try {
+        await fetch(WORKER, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: `pages/${id}`,
+            method: 'PATCH',
+            payload: { properties: { '事業': { multi_select: memo.tags.map(t => ({ name: t })) } } }
+          })
+        });
+      } catch(e) { console.error('Tag update failed:', e); }
+    }
+  }
+  openTagModal(id);
+}
+
+function rebuildTagBar() {
+  // Collect all unique tags from memos
+  const allTags = new Set(DEFAULT_TAGS);
+  memos.forEach(m => m.tags.forEach(t => allTags.add(t)));
+  TAGS = [...allTags];
+
+  const bar = document.getElementById('tagsBar');
+  bar.innerHTML = '';
+  // "All" pill
+  const allPill = document.createElement('div');
+  allPill.className = `tag-pill ${activeFilter === 'all' ? 'active' : ''}`;
+  allPill.dataset.tag = 'all';
+  allPill.textContent = 'すべて';
+  allPill.onclick = () => filterTag('all');
+  bar.appendChild(allPill);
+  // Tag pills
+  TAGS.forEach(tag => {
+    const pill = document.createElement('div');
+    pill.className = `tag-pill ${activeFilter === tag ? 'active' : ''}`;
+    pill.dataset.tag = tag;
+    pill.textContent = tag;
+    pill.onclick = () => filterTag(tag);
+    bar.appendChild(pill);
+  });
 }
 
 function closeTagModal() {
