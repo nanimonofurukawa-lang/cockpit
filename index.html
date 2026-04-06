@@ -704,9 +704,9 @@
     <div class="card-body">
       <div class="monthly-theme">
         <div class="theme-bar"></div>
-        <div>
-          <div class="theme-label">今月のテーマ</div>
-          <div class="theme-text">仕組み化と黒字化</div>
+        <div style="flex:1;">
+          <div class="theme-label">今月のテーマ（クリックで編集）</div>
+          <div class="theme-text" id="monthlyTheme" onclick="editTheme()" style="cursor:pointer;">仕組み化と黒字化</div>
         </div>
       </div>
       <div class="today-label">
@@ -984,6 +984,28 @@ function resetPomo(){
   btn.textContent='開始';btn.className='pomo-btn primary'; updatePomo();
 }
 updatePomo();
+
+// ========================================
+// MONTHLY THEME
+// ========================================
+const THEME_KEY = 'cockpit-theme';
+
+async function loadTheme() {
+  try {
+    const data = await cloudGet(THEME_KEY);
+    if (data) document.getElementById('monthlyTheme').textContent = data;
+  } catch(e) {}
+}
+
+function editTheme() {
+  const el = document.getElementById('monthlyTheme');
+  const current = el.textContent;
+  const newTheme = prompt('今月のテーマを入力：', current);
+  if (newTheme !== null && newTheme.trim()) {
+    el.textContent = newTheme.trim();
+    cloudSet(THEME_KEY, newTheme.trim());
+  }
+}
 
 // ========================================
 // FOCUS
@@ -1940,6 +1962,7 @@ function toggleTool(header) {
 // INIT
 // ========================================
 async function init() {
+  await loadTheme();
   await opsLoad();
   await loadFocus();
   await loadKpi();
