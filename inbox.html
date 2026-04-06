@@ -534,6 +534,7 @@ function renderMemos() {
         <button class="ma-btn ma-important" onclick="event.stopPropagation();toggleImportant('${memo.id}')">${memo.important ? '★ 解除' : '★ 重要'}</button>
         <button class="ma-btn ma-done" onclick="event.stopPropagation();toggleDone('${memo.id}')">${memo.done ? '↩ 戻す' : '✓ 完了'}</button>
         <button class="ma-btn ma-tag" onclick="event.stopPropagation();openTagModal('${memo.id}')">🏷 タグ</button>
+        <button class="ma-btn ma-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">🗑 削除</button>
       </div>
     `;
     list.appendChild(div);
@@ -560,7 +561,6 @@ async function toggleDone(id) {
   memo.done = !memo.done;
   renderMemos();
 
-  // Update in Notion
   if (!id.startsWith('temp-')) {
     const newStatus = memo.done ? '完了' : '未着手';
     try {
@@ -570,14 +570,30 @@ async function toggleDone(id) {
         body: JSON.stringify({
           endpoint: `pages/${id}`,
           method: 'PATCH',
-          payload: {
-            properties: {
-              'ステータス': { status: { name: newStatus } }
-            }
-          }
+          payload: { properties: { 'ステータス': { status: { name: newStatus } } } }
         })
       });
     } catch(e) { console.error('Status update failed:', e); }
+  }
+}
+
+async function deleteMemo(id) {
+  if (!confirm('このメモを削除しますか？')) return;
+  memos = memos.filter(m => m.id !== id);
+  renderMemos();
+
+  if (!id.startsWith('temp-')) {
+    try {
+      await fetch(WORKER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: `pages/${id}`,
+          method: 'PATCH',
+          payload: { archived: true }
+        })
+      });
+    } catch(e) { console.error('Delete failed:', e); }
   }
 }
 
